@@ -11,7 +11,9 @@
         <!-- Top Navigation Header Component Layer -->
         <div class="page-header">
             <h2 class="page-title">Full Scorecard</h2>
+            {% if admin_view %}
             <button class="nav-back-btn" onclick="window.location.href='/home'">DASHBOARD</button>
+            {% endif %}
         </div>
 
         <!-- Dynamic Match Outcome Banner Managed by Script -->
@@ -22,11 +24,17 @@
             <!-- Data tables, economy rates, and logs rendered dynamically via script.js -->
         </div>
 
-        <!-- Bottom Navigation Control Deck Footer -->
+        <!-- Bottom Navigation Control Deck Footer: Restricted exclusively to logged admins -->
+        {% if admin_view %}
         <div class="control-deck-footer">
             <button class="secondary" onclick="window.location.href='/home'">Return to Dashboard</button>
             <button onclick="window.location.href='/home'">Dashboard Main</button>
         </div>
+        {% else %}
+        <div class="bento-card full-width" style="text-align: center; padding: 20px 0; border-top: 1px solid rgba(0, 194, 255, 0.2); margin-top: 24px;">
+            <span class="captain-badge" style="color: var(--electric-blue); font-size: 0.85rem;">Broadcast Summary Log</span>
+        </div>
+        {% endif %}
     </div>
     <script src="/frontend/js/script.js"></script>
     <script>
