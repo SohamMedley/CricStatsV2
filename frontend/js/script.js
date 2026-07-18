@@ -80,7 +80,6 @@ function loadDashboardMatchHistory() {
             let statusText = 'RESUME';
             let targetRedirectUrl = `/scorecard/${m.match_code}`;
             
-            // Evaluates state context. Completed entries fallback cleanly to log tracking views
             if (m.status === 'completed') {
                 statusBadgeColor = 'var(--text-dim)';
                 statusText = m.winner === 'Match Tied' ? 'TIED' : 'VIEW';
@@ -389,9 +388,9 @@ function appendPlayerFromDropdown(panel) {
     if (!pid) return;
 
     if (panel === 'A') {
-        selectedTeamAPlayers.push(pid);
+        if(!selectedTeamAPlayers.includes(pid)) selectedTeamAPlayers.push(pid);
     } else {
-        selectedTeamBPlayers.push(pid);
+        if(!selectedTeamBPlayers.includes(pid)) selectedTeamBPlayers.push(pid);
     }
     dropdown.value = "";
     rebuildSelectorDropdownPools();
@@ -459,6 +458,36 @@ function deleteTeamRecord(tid) {
             setupTeamConfigScreen();
         }).catch(() => {});
     }
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   FIX BALANCED CAPTAIN PAYLOAD INTEGRITY SUBMISSION SYSTEM
+   ───────────────────────────────────────────────────────────────────────────── */
+function commitTeamConfiguration() {
+    const nameA = document.getElementById('teamAName').value.trim();
+    const nameB = document.getElementById('teamBName').value.trim();
+    const cA = document.getElementById('capA').value;
+    const cB = document.getElementById('capB').value;
+    
+    if(!cA || !cB) return triggerGlobalNotificationBanner("Select Captain for both teams first!", true);
+    if(selectedTeamAPlayers.length < 1 || selectedTeamBPlayers.length < 1) {
+        return triggerGlobalNotificationBanner("Roster sets require at least 1 unit element.", true);
+    }
+    
+    // Explicitly guarantee Captain resides inside player array payload lists for server validators
+    if(!selectedTeamAPlayers.includes(cA)) selectedTeamAPlayers.push(cA);
+    if(!selectedTeamBPlayers.includes(cB)) selectedTeamBPlayers.push(cB);
+    
+    const teamAData = { name: nameA, captain: cA, players: selectedTeamAPlayers };
+    const teamBData = { name: nameB, captain: cB, players: selectedTeamBPlayers };
+    
+    Promise.all([
+        secureApiFetch('/api/teams', { method:'POST', body:JSON.stringify(teamAData) }),
+        secureApiFetch('/api/teams', { method:'POST', body:JSON.stringify(teamBData) })
+    ]).then(() => {
+        triggerGlobalNotificationBanner("✓ Teams Blueprint Saved Successfully", false);
+        setTimeout(() => { window.location.href = '/home'; }, 1000);
+    }).catch(() => {});
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
