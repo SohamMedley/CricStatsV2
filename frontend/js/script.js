@@ -61,6 +61,63 @@ function executeAdminLogin() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
+   NEW COMPONENT: REALTIME MATCH HISTORY LOG COMPILER
+   ───────────────────────────────────────────────────────────────────────────── */
+function loadDashboardMatchHistory() {
+    const feed = document.getElementById('dashboardMatchHistoryFeed');
+    if (!feed) return;
+
+    secureApiFetch('/api/matches/history', { method: 'GET' })
+    .then(matches => {
+        if (!Array.isArray(matches) || matches.length === 0) {
+            feed.innerHTML = `<div class="empty-state-text">NO MATCH RECORDS RECORDED YET</div>`;
+            return;
+        }
+
+        let htmlBuffer = '';
+        matches.reverse().forEach(m => {
+            let statusBadgeColor = 'var(--system-secure)';
+            let statusText = 'LIVE';
+            
+            if (m.status === 'completed') {
+                statusBadgeColor = 'var(--text-dim)';
+                statusText = m.winner === 'Match Tied' ? 'TIED' : 'DONE';
+            } else if (m.status === 'inn1_completed') {
+                statusBadgeColor = 'var(--electric-blue)';
+                statusText = 'MID';
+            }
+
+            const inn1 = m.innings ? m.innings.innings_1 : null;
+            const inn2 = m.innings ? m.innings.innings_2 : null;
+            
+            let summaryRunsText = '0/0 vs 0/0';
+            if (inn1) summaryRunsText = `${inn1.total_runs}/${inn1.wickets}`;
+            if (inn2) summaryRunsText += ` & ${inn2.total_runs}/${inn2.wickets}`;
+
+            htmlBuffer += `
+                <div class="player-row-chip" style="border-bottom: 1px solid rgba(255,255,255,0.04); padding: 14px 0; cursor: pointer;" 
+                     onclick="window.location.href='/detailed-score/${m.match_code}'">
+                    <div style="display: flex; flex-direction: column; gap: 2px; width: 75%;">
+                        <strong style="font-size: 0.95rem; color: var(--text-pure); text-transform: uppercase;">
+                            ${m.team_a} <span style="color:var(--text-dim); font-size:0.75rem;">vs</span> ${m.team_b}
+                        </strong>
+                        <span class="pool-player-meta" style="font-size: 0.8rem; color: var(--text-silver); font-family: 'Space Grotesk', sans-serif;">
+                            CODE: <span style="color: var(--electric-blue); font-weight:700;">${m.match_code}</span> | ${summaryRunsText}
+                        </span>
+                    </div>
+                    <span class="card-label" style="background: ${statusBadgeColor}; font-size: 0.65rem; margin: 0; padding: 4px 10px;">
+                        ${statusText}
+                    </span>
+                </div>`;
+        });
+        feed.innerHTML = htmlBuffer;
+    })
+    .catch(() => {
+        feed.innerHTML = `<div class="empty-state-text">Failed to load match ledgers.</div>`;
+    });
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
    ENHANCED ROSTER COMPILER WITH 1-LINE QUICK STATS HUD LAYOUT OVERLAYS
    ───────────────────────────────────────────────────────────────────────────── */
 function loadPlayerRoster() {
@@ -599,7 +656,6 @@ let synchronizationLoopIntervalTimer = null;
 
 function startLiveScoreSynchronizationLoop() {
     fetchLiveScoreboardData();
-    // Non-blocking background telemetry sync polling every 3 seconds (reduces spectator delay latency)
     synchronizationLoopIntervalTimer = setInterval(fetchLiveScoreboardData, 3000);
 }
 
@@ -639,7 +695,6 @@ function updateLiveScoreboardUI(state) {
         document.getElementById('rowStriker').innerHTML = `<span>* ${s.name}</span> <span>${s.runs}(${s.balls})</span>`;
     } else {
         document.getElementById('rowStriker').innerHTML = `<span class="captain-badge" style="color:var(--text-dim);">[CREASE VACANT - AWAITING DEPLOYMENT]</span> <span>-</span>`;
-        // INTERCEPT TRIGGER CONTEXT CONTROL: Only launch prompt overrides if active session has admin privileges
         if(window.isAdmin && state.status === 'live' && !currentBatsmanPromptActive) {
             promptNextPlayerReplacement('striker');
         }
@@ -650,7 +705,6 @@ function updateLiveScoreboardUI(state) {
         document.getElementById('rowNonStriker').innerHTML = `<span>${ns.name}</span> <span>${ns.runs}(${ns.balls})</span>`;
     } else {
         document.getElementById('rowNonStriker').innerHTML = `<span class="captain-badge" style="color:var(--text-dim);">[CREASE VACANT - AWAITING DEPLOYMENT]</span> <span>-</span>`;
-        // INTERCEPT TRIGGER CONTEXT CONTROL: Only launch prompt overrides if active session has admin privileges
         if(window.isAdmin && state.status === 'live' && !currentBatsmanPromptActive) {
             promptNextPlayerReplacement('non_striker');
         }
@@ -707,7 +761,7 @@ function updateLiveScoreboardUI(state) {
 }
 
 function submitBallRecord(type, runs, extraType=null, dismissal=null, fielderId=null, runOutBatsmanId=null, bowlerId=null, bowlerName=null, batsmanId=null, batsmanName=null, positionKey=null) {
-    if (!window.isAdmin) return; // Prevent speculative execution if layout binds accidentally fire
+    if (!window.isAdmin) return;
     
     const payload = { 
         event_type: type, 
@@ -744,6 +798,7 @@ function commitExtraPlusAdjustment() {
     submitBallRecord('EXTRA', runs, type);
 }
 
+// Additional helper definitions map context boundaries correctly below...
 function triggerWicketDismissal(type) {
     if(confirm(`Confirm operational dismissal: ${type}?`)) {
         submitBallRecord('WICKET', 0, null, type);
@@ -940,7 +995,7 @@ function triggerMatchCompletionPopup() {
         return;
     }
 
-    if (!window.isAdmin) return; // Spectators freeze loop configuration until final commit processes
+    if (!window.isAdmin) return;
 
     secureApiFetch(`/api/match/complete/${window.matchCode}`, { method: 'POST' })
     .then(data => {
