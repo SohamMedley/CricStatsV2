@@ -61,7 +61,7 @@ function executeAdminLogin() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   NEW COMPONENT: REALTIME MATCH HISTORY LOG COMPILER
+   CRITICAL RECOVERY LAYER: MATCH HISTORY COMPILER WITH ACTIVE RESUME CHIPS
    ───────────────────────────────────────────────────────────────────────────── */
 function loadDashboardMatchHistory() {
     const feed = document.getElementById('dashboardMatchHistoryFeed');
@@ -77,14 +77,18 @@ function loadDashboardMatchHistory() {
         let htmlBuffer = '';
         matches.reverse().forEach(m => {
             let statusBadgeColor = 'var(--system-secure)';
-            let statusText = 'LIVE';
+            let statusText = 'RESUME';
+            let targetRedirectUrl = `/scorecard/${m.match_code}`;
             
+            // Evaluates state context. Completed entries fallback cleanly to log tracking views
             if (m.status === 'completed') {
                 statusBadgeColor = 'var(--text-dim)';
-                statusText = m.winner === 'Match Tied' ? 'TIED' : 'DONE';
+                statusText = m.winner === 'Match Tied' ? 'TIED' : 'VIEW';
+                targetRedirectUrl = `/detailed-score/${m.match_code}`;
             } else if (m.status === 'inn1_completed') {
                 statusBadgeColor = 'var(--electric-blue)';
-                statusText = 'MID';
+                statusText = 'RESUME INN-2';
+                targetRedirectUrl = `/scorecard/${m.match_code}`;
             }
 
             const inn1 = m.innings ? m.innings.innings_1 : null;
@@ -96,8 +100,8 @@ function loadDashboardMatchHistory() {
 
             htmlBuffer += `
                 <div class="player-row-chip" style="border-bottom: 1px solid rgba(255,255,255,0.04); padding: 14px 0; cursor: pointer;" 
-                     onclick="window.location.href='/detailed-score/${m.match_code}'">
-                    <div style="display: flex; flex-direction: column; gap: 2px; width: 75%;">
+                     onclick="window.location.href='${targetRedirectUrl}'">
+                    <div style="display: flex; flex-direction: column; gap: 2px; width: 70%;">
                         <strong style="font-size: 0.95rem; color: var(--text-pure); text-transform: uppercase;">
                             ${m.team_a} <span style="color:var(--text-dim); font-size:0.75rem;">vs</span> ${m.team_b}
                         </strong>
@@ -105,7 +109,7 @@ function loadDashboardMatchHistory() {
                             CODE: <span style="color: var(--electric-blue); font-weight:700;">${m.match_code}</span> | ${summaryRunsText}
                         </span>
                     </div>
-                    <span class="card-label" style="background: ${statusBadgeColor}; font-size: 0.65rem; margin: 0; padding: 4px 10px;">
+                    <span class="card-label" style="background: ${statusBadgeColor}; font-size: 0.65rem; margin: 0; padding: 6px 10px; min-width: 85px; text-align: center;">
                         ${statusText}
                     </span>
                 </div>`;
@@ -798,7 +802,6 @@ function commitExtraPlusAdjustment() {
     submitBallRecord('EXTRA', runs, type);
 }
 
-// Additional helper definitions map context boundaries correctly below...
 function triggerWicketDismissal(type) {
     if(confirm(`Confirm operational dismissal: ${type}?`)) {
         submitBallRecord('WICKET', 0, null, type);
