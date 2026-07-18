@@ -96,7 +96,8 @@ def scorecard_page(match_code):
 
 @main.route('/detailed-score/<match_code>')
 def detailed_score_page(match_code):
-    return render_template('detailed_score.html', match_code=match_code)
+    admin_view = session.get('admin_logged_in', False)
+    return render_template('detailed_score.html', match_code=match_code, admin_view=admin_view)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ATOMIC API LAYER WITH TRANSACTIONS AND SCHEMA GUARDS
@@ -215,7 +216,6 @@ def api_create_match():
     if s_id == ns_id: 
         return jsonify({"status": "error", "message": "Crease slot assignment exception: Striker and Non-Striker must be unique."}), 400
 
-    # WICKETKEEPER FILTER: Ensure a fallback isn't prioritized if marked as Keeper
     global_players = db_ref.child('players').get() or {}
     chosen_bowler_id = b_id
     chosen_bowler_name = data.get('bowler_name', 'Bowler')
@@ -223,7 +223,6 @@ def api_create_match():
     if chosen_bowler_id and chosen_bowler_id in global_players:
         player_profile = global_players[chosen_bowler_id]
         if player_profile.get('role') == 'Wicketkeeper' and not data.get('explicit_bowler_override'):
-            # Auto-shift default priority to an available alternate bowler/all-rounder if exists
             for p_key, p_val in global_players.items():
                 if p_key not in [s_id, ns_id] and p_val.get('role') in ['Bowler', 'All-rounder']:
                     chosen_bowler_id = p_key
@@ -279,6 +278,20 @@ def api_update_score(match_code):
     def ball_txn(current_match_state):
         if not current_match_state: 
             return None
+            
+        # OVERS BOUNDARY GUARD: Prevent additions if match limits are fully scaled
+        if current_match_state.get('status') in ['inn1_completed', 'completed']:
+            return current_match_state
+            
+        inn_key = f"innings_{current_match_state.get('current_innings', 1)}"
+        inn_data = current_match_state.get('innings', {}).get(inn_key)
+        
+        if inn_data:
+            max_balls = int(current_match_state.get('max_overs', 1)) * 6
+            legal_balls_bowled = int(inn_data.get('total_balls', 0))
+            
+            if legal_balls_bowled >= max_balls and post_data.get('event_type') != 'UNDO':
+                return current_match_state
         
         updated = process_ball_event(
             current_match_state,
