@@ -89,7 +89,7 @@ def replay_entire_match_ledger(match_state):
         }
     }
     
-    # CRUCIAL BUG FIX: Proactively build second innings branch structures during replay configurations
+    # Proactively build second innings branch structures during replay configurations
     if int(c_inn) == 2 or init_setup.get("inn2_batting") or "inn2_setup" in init_setup:
         inn2_bat = init_setup.get("inn2_batting") or init_setup.get("inn1_bowling")
         inn2_bowl = init_setup.get("inn2_bowling") or init_setup.get("inn1_batting")
@@ -107,8 +107,12 @@ def replay_entire_match_ledger(match_state):
         }
         rebuilt_state["innings"]["innings_2"] = reinitialize_innings_schema(inn2_bat, inn2_bowl, merged_setup)
 
+    # Process all ledger actions chronologically up to the current state point
     for event in ledger:
         execute_ledger_event_step(rebuilt_state, event)
+        
+    # Context check to handle post-innings transitions safely
+    evaluate_live_innings_boundaries(rebuilt_state)
         
     return rebuilt_state
 
@@ -146,7 +150,6 @@ def execute_ledger_event_step(state, event):
 
     ev_type = event.get("event_type", "SYNC")
     
-    # Process mid-match bowler allocation tracking frames natively inside replay pipelines
     if ev_type == EventType.BOWLER_CHANGE:
         target_id = event.get("bowler_id")
         target_name = event.get("bowler_name", "Bowler")
@@ -156,7 +159,6 @@ def execute_ledger_event_step(state, event):
                 inn["bowlers"][target_id] = {"id": target_id, "name": target_name, "overs_bowled": 0.0, "balls": 0, "runs": 0, "wickets": 0, "maidens": 0}
         return
 
-    # Process batsman substitution tracking frames natively inside replay pipelines
     if ev_type == EventType.BATSMAN_CHANGE:
         target_id = event.get("batsman_id")
         target_name = event.get("batsman_name", "Batsman")
@@ -273,4 +275,30 @@ def execute_ledger_event_step(state, event):
         inn["striker_id"], inn["non_striker_id"] = inn["non_striker_id"], inn["striker_id"]
         
     if is_legal_ball and (inn["total_balls"] % 6 == 0) and not dismissal:
-        inn["striker_id"], inn["non_striker_id"] = inn["non_striker_id"], inn["striker_id"]
+        if inn["striker_id"] and inn["non_striker_id"]:
+            inn["striker_id"], inn["non_striker_id"] = inn["non_striker_id"], inn["striker_id"]
+
+def evaluate_live_innings_boundaries(state):
+    """
+    Evaluates dynamic transitions at over or wicket caps, switching states 
+    natively instead of auto-terminating the entire engine prematurely.
+    """
+    max_balls = int(state.get("max_overs", 1)) * 6
+    inn_1 = state["innings"].get("innings_1")
+    inn_2 = state["innings"].get("innings_2")
+    
+    if int(state["current_innings"]) == 1 and inn_1:
+        if inn_1["wickets"] >= 10 or inn_1["total_balls"] >= max_balls:
+            if not inn_2 and not state["initial_setup_snapshot"].get("inn2_setup"):
+                state["status"] = "inn1_completed"
+                
+    elif int(state["current_innings"]) == 2 and inn_2 and inn_1:
+        target = inn_1["total_runs"] + 1
+        if inn_2["total_runs"] >= target or inn_2["wickets"] >= 10 or inn_2["total_balls"] >= max_balls:
+            state["status"] = "completed"
+            if inn_2["total_runs"] >= target:
+                state["winner"] = inn_2["batting_team"]
+            elif inn_1["total_runs"] > inn_2["total_runs"]:
+                state["winner"] = inn_1["batting_team"]
+            else:
+                state["winner"] = "Match Tied"
