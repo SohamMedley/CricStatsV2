@@ -12,7 +12,11 @@
         <div class="page-header">
             <h2 class="page-title">Full Scorecard</h2>
             {% if admin_view %}
-            <button class="nav-back-btn" onclick="window.location.href='/home'">DASHBOARD</button>
+                {% if match_status == 'live' or match_status == 'inn1_completed' %}
+                <button class="nav-back-btn" onclick="window.location.href='/scorecard/{{match_code}}'">RESUME</button>
+                {% else %}
+                <button class="nav-back-btn" onclick="window.location.href='/home'">DASHBOARD</button>
+                {% endif %}
             {% endif %}
         </div>
 
@@ -24,11 +28,16 @@
             <!-- Data tables, economy rates, and logs rendered dynamically via script.js -->
         </div>
 
-        <!-- Bottom Navigation Control Deck Footer: Restricted exclusively to logged admins -->
+        <!-- Bottom Navigation Control Deck Footer -->
         {% if admin_view %}
         <div class="control-deck-footer">
             <button class="secondary" onclick="window.location.href='/home'">Return to Dashboard</button>
+            
+            {% if match_status == 'live' or match_status == 'inn1_completed' %}
+            <button onclick="window.location.href='/scorecard/{{match_code}}'" style="background: var(--cobalt-core); color: var(--text-pure);">Resume Game</button>
+            {% else %}
             <button onclick="window.location.href='/home'">Dashboard Main</button>
+            {% endif %}
         </div>
         {% else %}
         <div class="bento-card full-width" style="text-align: center; padding: 20px 0; border-top: 1px solid rgba(0, 194, 255, 0.2); margin-top: 24px;">
