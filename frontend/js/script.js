@@ -105,7 +105,7 @@ function loadDashboardMatchHistory() {
                             ${m.team_a} <span style="color:var(--text-dim); font-size:0.75rem;">vs</span> ${m.team_b}
                         </strong>
                         <span class="pool-player-meta" style="font-size: 0.8rem; color: var(--text-silver); font-family: 'Space Grotesk', sans-serif;">
-                            CODE: <span style="color: var(--electric-blue); font-weight:700;">${m.match_code}</span> | ${summaryRunsText}
+                            CODE: <span style="color: var(--electric-blue); font-weight:700;">${m.match_code[:2]}*****</span> | ${summaryRunsText}
                         </span>
                     </div>
                     <span class="card-label" style="background: ${statusBadgeColor}; font-size: 0.65rem; margin: 0; padding: 6px 10px; min-width: 85px; text-align: center;">
@@ -135,7 +135,6 @@ function loadPlayerRoster() {
         
         if(count === 0) {
             container.innerHTML = `<div class="empty-state-text">NO PROFILES RECORDED</div>`;
-            action.innerHTML = `<button class="btn-full-width" onclick="togglePlayerModal(true)">+ ADD INITIAL PLAYER</button>`;
         } else {
             Object.values(players).forEach(p => {
                 if (!p) return;
@@ -180,9 +179,6 @@ function loadPlayerRoster() {
                     </div>`;
             });
             container.innerHTML = htmlBuffer;
-            if(count < 35) {
-                action.innerHTML = `<button class="btn-full-width" onclick="togglePlayerModal(true)">+ ADD NEW PROFILE</button>`;
-            }
         }
     }).catch(() => {});
 }
@@ -250,7 +246,7 @@ function savePlayerProfile() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   DUAL PANELS STRUCTURAL ROSTER CONFIGURATOR WITH NO-CLONE IMPORT SYSTEM
+   DUAL PANELS ROSTER CONFIGURATOR - WITH MUTUAL EXCLUSION PLAYER POOLS
    ───────────────────────────────────────────────────────────────────────────── */
 let rosterMemory = [];
 let historicalTeamsMemory = {};
@@ -323,6 +319,7 @@ function rebuildSelectorDropdownPools() {
     let baseA = `<option value="">+ Add Player to Team 1</option>`;
     let baseB = `<option value="">+ Add Player to Team 2</option>`;
 
+    // MUTUAL EXCLUSION FILTER: Hide selected players from opposite dropdown lists completely
     rosterMemory.forEach(p => {
         if (!selectedTeamAPlayers.includes(p.id) && !selectedTeamBPlayers.includes(p.id)) {
             baseA += `<option value="${p.id}">${p.name} (${p.role})</option>`;
@@ -349,8 +346,8 @@ function syncPanelCaptainsDropdowns() {
     let htmlB = `<option value="">Select Capt</option>`;
 
     rosterMemory.forEach(p => {
-        htmlA += `<option value="${p.id}">${p.name}</option>`;
-        htmlB += `<option value="${p.id}">${p.name}</option>`;
+        if (selectedTeamAPlayers.includes(p.id)) htmlA += `<option value="${p.id}">${p.name}</option>`;
+        if (selectedTeamBPlayers.includes(p.id)) htmlB += `<option value="${p.id}">${p.name}</option>`;
     });
 
     capSelA.innerHTML = htmlA;
@@ -460,9 +457,6 @@ function deleteTeamRecord(tid) {
     }
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   FIX BALANCED CAPTAIN PAYLOAD INTEGRITY SUBMISSION SYSTEM
-   ───────────────────────────────────────────────────────────────────────────── */
 function commitTeamConfiguration() {
     const nameA = document.getElementById('teamAName').value.trim();
     const nameB = document.getElementById('teamBName').value.trim();
@@ -474,7 +468,6 @@ function commitTeamConfiguration() {
         return triggerGlobalNotificationBanner("Roster sets require at least 1 unit element.", true);
     }
     
-    // Explicitly guarantee Captain resides inside player array payload lists for server validators
     if(!selectedTeamAPlayers.includes(cA)) selectedTeamAPlayers.push(cA);
     if(!selectedTeamBPlayers.includes(cB)) selectedTeamBPlayers.push(cB);
     
