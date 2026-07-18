@@ -17,6 +17,9 @@
                 {% else %}
                 <button class="nav-back-btn" onclick="window.location.href='/home'">DASHBOARD</button>
                 {% endif %}
+            {% else %}
+                <!-- Spectator Safety Back Navigation Lever -->
+                <button class="nav-back-btn" onclick="window.location.href='/scorecard/{{match_code}}'">LIVE PANEL</button>
             {% endif %}
         </div>
 
@@ -40,8 +43,8 @@
             {% endif %}
         </div>
         {% else %}
-        <div class="bento-card full-width" style="text-align: center; padding: 20px 0; border-top: 1px solid rgba(0, 194, 255, 0.2); margin-top: 24px;">
-            <span class="captain-badge" style="color: var(--electric-blue); font-size: 0.85rem;">Broadcast Summary Log</span>
+        <div class="control-deck-footer" style="grid-template-columns: 1fr;">
+            <button onclick="window.location.href='/scorecard/{{match_code}}'">← BACK TO LIVE VIEW</button>
         </div>
         {% endif %}
     </div>
