@@ -125,6 +125,7 @@ def reinitialize_innings_schema(bat_team, bowl_team, identities):
         "total_runs": 0,
         "wickets": 0,
         "total_balls": 0,
+        "current_over_illegal_count": 0,
         "free_hit_active": False,
         "extras": {"wd": 0, "nb": 0, "b": 0, "lb": 0, "total": 0},
         "batsmen": {
@@ -153,6 +154,7 @@ def execute_ledger_event_step(state, event):
     if ev_type == EventType.BOWLER_CHANGE:
         target_id = event.get("bowler_id")
         target_name = event.get("bowler_name", "Bowler")
+        inn["current_over_illegal_count"] = 0
         if target_id:
             inn["current_bowler_id"] = target_id
             if target_id not in inn["bowlers"]:
@@ -190,26 +192,34 @@ def execute_ledger_event_step(state, event):
     if ev_type == EventType.EXTRA:
         if extra_type == ExtraType.WD:
             is_legal_ball = False
+            inn["current_over_illegal_count"] = inn.get("current_over_illegal_count", 0) + 1
             inn["extras"]["wd"] += (1 + runs)
             inn["extras"]["total"] += (1 + runs)
             inn["total_runs"] += (1 + runs)
-            if bowler_id in inn["bowlers"]:
-                inn["bowlers"][bowler_id]["runs"] += (1 + runs)
+            
+            # Penalize bowler stats only if the over isn't being cancelled
+            if inn["current_over_illegal_count"] < 3:
+                if bowler_id in inn["bowlers"]:
+                    inn["bowlers"][bowler_id]["runs"] += (1 + runs)
             inn["free_hit_active"] = False
             
         elif extra_type == ExtraType.NB:
             is_legal_ball = False
+            inn["current_over_illegal_count"] = inn.get("current_over_illegal_count", 0) + 1
             inn["extras"]["nb"] += 1
             inn["extras"]["total"] += 1
             inn["total_runs"] += 1
-            if bowler_id in inn["bowlers"]:
-                inn["bowlers"][bowler_id]["runs"] += (1 + runs)
             
             if runs > 0:
                 inn["total_runs"] += runs
                 inn["extras"]["total"] += runs
                 if striker_id in inn["batsmen"]:
                     inn["batsmen"][striker_id]["runs"] += runs
+            
+            # Penalize bowler stats only if the over isn't being cancelled
+            if inn["current_over_illegal_count"] < 3:
+                if bowler_id in inn["bowlers"]:
+                    inn["bowlers"][bowler_id]["runs"] += (1 + runs)
                 
             inn["free_hit_active"] = True
             
@@ -277,6 +287,17 @@ def execute_ledger_event_step(state, event):
     if is_legal_ball and (inn["total_balls"] % 6 == 0) and not dismissal:
         if inn["striker_id"] and inn["non_striker_id"]:
             inn["striker_id"], inn["non_striker_id"] = inn["non_striker_id"], inn["striker_id"]
+
+    # CANCELLED OVER ENFORCEMENT GUARD: Jump match balls cleanly to force a rotation
+    if not is_legal_ball and ev_type == EventType.EXTRA and extra_type in [ExtraType.WD, ExtraType.NB]:
+        if inn.get("current_over_illegal_count", 0) >= 3:
+            balls_bowled = inn["total_balls"] % 6
+            if balls_bowled != 0:
+                inn["total_balls"] += (6 - balls_bowled)
+            inn["current_over_illegal_count"] = 0
+            
+            if inn["striker_id"] and inn["non_striker_id"] and not dismissal:
+                inn["striker_id"], inn["non_striker_id"] = inn["non_striker_id"], inn["striker_id"]
 
 def evaluate_live_innings_boundaries(state):
     """
