@@ -162,7 +162,6 @@ def api_teams():
         def team_txn(current_teams):
             teams_dict = current_teams or {}
             
-            # BUG FIX: Implement Upsert logic. If team name matches, overwrite it instead of crashing.
             target_key = None
             for key, t in teams_dict.items():
                 if t and str(t.get('name')).lower() == clean_name.lower():
@@ -170,12 +169,10 @@ def api_teams():
                     break
             
             if target_key:
-                # Update existing team blueprint
                 payload['id'] = target_key
                 payload['name'] = clean_name
                 teams_dict[target_key] = payload
             else:
-                # Create a new unique team key node
                 new_key = f"team_{len(teams_dict) + 1}"
                 payload['id'] = new_key
                 payload['name'] = clean_name
@@ -208,6 +205,7 @@ def api_create_match():
     t_b = data.get('team_b_name')
     s_id = data.get('striker_id')
     ns_id = data.get('non_striker_id')
+    b_id = data.get('bowler_id')
     
     if not t_a or not t_b or not s_id or not ns_id:
         return jsonify({"status": "error", "message": "Configuration exception: Complete crease assignments are required."}), 400
@@ -217,6 +215,21 @@ def api_create_match():
     if s_id == ns_id: 
         return jsonify({"status": "error", "message": "Crease slot assignment exception: Striker and Non-Striker must be unique."}), 400
 
+    # WICKETKEEPER FILTER: Ensure a fallback isn't prioritized if marked as Keeper
+    global_players = db_ref.child('players').get() or {}
+    chosen_bowler_id = b_id
+    chosen_bowler_name = data.get('bowler_name', 'Bowler')
+    
+    if chosen_bowler_id and chosen_bowler_id in global_players:
+        player_profile = global_players[chosen_bowler_id]
+        if player_profile.get('role') == 'Wicketkeeper' and not data.get('explicit_bowler_override'):
+            # Auto-shift default priority to an available alternate bowler/all-rounder if exists
+            for p_key, p_val in global_players.items():
+                if p_key not in [s_id, ns_id] and p_val.get('role') in ['Bowler', 'All-rounder']:
+                    chosen_bowler_id = p_key
+                    chosen_bowler_name = p_val.get('name')
+                    break
+
     match_code = generate_match_code()
     match_id = db_ref.child('matches').push().key
     
@@ -225,8 +238,8 @@ def api_create_match():
         "striker_name": data.get('striker_name', 'Striker'),
         "non_striker_id": ns_id,
         "non_striker_name": data.get('non_striker_name', 'Non-Striker'),
-        "bowler_id": data.get('bowler_id', 'Bowler'),
-        "bowler_name": data.get('bowler_name', 'Bowler'),
+        "bowler_id": chosen_bowler_id,
+        "bowler_name": chosen_bowler_name,
         "wicketkeeper_id": data.get('wicketkeeper_id', 'Keeper'),
         "inn1_batting": data.get('batting_team'),
         "inn1_bowling": data.get('bowling_team')
@@ -234,6 +247,8 @@ def api_create_match():
     
     data['match_id'] = match_id
     data['max_overs'] = int(data.get('max_overs', 1))
+    data['bowler_id'] = chosen_bowler_id
+    data['bowler_name'] = chosen_bowler_name
     
     from backend.match_logic import initialize_match_state
     initial_state = initialize_match_state(data)
