@@ -245,7 +245,7 @@ function savePlayerProfile() {
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
-   DUAL PANELS ROSTER CONFIGURATOR - WITH MUTUAL EXCLUSION PLAYER POOLS
+   DUAL PANELS ROSTER CONFIGURATOR - WITH STRICT MUTUAL EXCLUSION PLAYER POOLS
    ───────────────────────────────────────────────────────────────────────────── */
 let rosterMemory = [];
 let historicalTeamsMemory = {};
@@ -300,10 +300,16 @@ function importExistingTeamBlueprint(teamKey) {
     
     if (operationalNamingTarget === 'A') {
         selectedTeamAPlayers = [...(teamBlueprint.players || [])];
+        // Cross-Purge Validation: Remove from B if they are imported into A
+        selectedTeamBPlayers = selectedTeamBPlayers.filter(id => !selectedTeamAPlayers.includes(id));
         document.getElementById('capA').value = teamBlueprint.captain || "";
+        if (selectedTeamAPlayers.includes(document.getElementById('capB').value)) document.getElementById('capB').value = "";
     } else {
         selectedTeamBPlayers = [...(teamBlueprint.players || [])];
+        // Cross-Purge Validation: Remove from A if they are imported into B
+        selectedTeamAPlayers = selectedTeamAPlayers.filter(id => !selectedTeamBPlayers.includes(id));
         document.getElementById('capB').value = teamBlueprint.captain || "";
+        if (selectedTeamBPlayers.includes(document.getElementById('capA').value)) document.getElementById('capA').value = "";
     }
     
     closeNamingModal();
@@ -318,8 +324,12 @@ function rebuildSelectorDropdownPools() {
     let baseA = `<option value="">+ Add Player to Team 1</option>`;
     let baseB = `<option value="">+ Add Player to Team 2</option>`;
 
+    // STRICT MUTUAL EXCLUSION: If assigned to ANY squad, completely hide from both selection drop menus
     rosterMemory.forEach(p => {
-        if (!selectedTeamAPlayers.includes(p.id) && !selectedTeamBPlayers.includes(p.id)) {
+        const isInTeamA = selectedTeamAPlayers.includes(p.id);
+        const isInTeamB = selectedTeamBPlayers.includes(p.id);
+        
+        if (!isInTeamA && !isInTeamB) {
             baseA += `<option value="${p.id}">${p.name} (${p.role})</option>`;
             baseB += `<option value="${p.id}">${p.name} (${p.role})</option>`;
         }
@@ -453,32 +463,6 @@ function deleteTeamRecord(tid) {
             setupTeamConfigScreen();
         }).catch(() => {});
     }
-}
-
-function commitTeamConfiguration() {
-    const nameA = document.getElementById('teamAName').value.trim();
-    const nameB = document.getElementById('teamBName').value.trim();
-    const cA = document.getElementById('capA').value;
-    const cB = document.getElementById('capB').value;
-    
-    if(!cA || !cB) return triggerGlobalNotificationBanner("Select Captain for both teams first!", true);
-    if(selectedTeamAPlayers.length < 1 || selectedTeamBPlayers.length < 1) {
-        return triggerGlobalNotificationBanner("Roster sets require at least 1 unit element.", true);
-    }
-    
-    if(!selectedTeamAPlayers.includes(cA)) selectedTeamAPlayers.push(cA);
-    if(!selectedTeamBPlayers.includes(cB)) selectedTeamBPlayers.push(cB);
-    
-    const teamAData = { name: nameA, captain: cA, players: selectedTeamAPlayers };
-    const teamBData = { name: nameB, captain: cB, players: selectedTeamBPlayers };
-    
-    Promise.all([
-        secureApiFetch('/api/teams', { method:'POST', body:JSON.stringify(teamAData) }),
-        secureApiFetch('/api/teams', { method:'POST', body:JSON.stringify(teamBData) })
-    ]).then(() => {
-        triggerGlobalNotificationBanner("✓ Teams Blueprint Saved Successfully", false);
-        setTimeout(() => { window.location.href = '/home'; }, 1000);
-    }).catch(() => {});
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -680,7 +664,6 @@ let synchronizationLoopIntervalTimer = null;
 
 function startLiveScoreSynchronizationLoop() {
     fetchLiveScoreboardData();
-    // Non-blocking real-time interval synchronization handler running at 3s frequency
     synchronizationLoopIntervalTimer = setInterval(fetchLiveScoreboardData, 3000);
 }
 
@@ -691,6 +674,12 @@ function fetchLiveScoreboardData() {
     .then(state => {
         if(state) {
             liveStateMemory = state;
+            if (state.status === 'completed') {
+                if (synchronizationLoopIntervalTimer) {
+                    clearInterval(synchronizationLoopIntervalTimer);
+                    synchronizationLoopIntervalTimer = null;
+                }
+            }
             updateLiveScoreboardUI(state);
         }
     }).catch(() => {});
@@ -754,13 +743,17 @@ function updateLiveScoreboardUI(state) {
             document.getElementById('rrrVal').innerText = `${rrr} (Need ${runsNeeded} off ${ballsRemaining} bls)`;
         }
         
-        if(inn.total_runs >= target || inn.wickets >= 10 || ballsRemaining <= 0) {
+        if(inn.total_runs >= target && state.status === 'live') {
+            triggerMatchCompletionPopup();
+        } else if((inn.wickets >= 10 || ballsRemaining <= 0) && state.status === 'live') {
+            triggerMatchCompletionPopup();
+        } else if (state.status === 'completed') {
             triggerMatchCompletionPopup();
         }
     } else {
         const totalMaxBalls = state.max_overs * 6;
         const ballsRemaining = totalMaxBalls - inn.total_balls;
-        if(inn.wickets >= 10 || ballsRemaining <= 0 || state.status === "inn1_completed") {
+        if((inn.wickets >= 10 || ballsRemaining <= 0) && state.status === 'live') {
             triggerInningsBreakPopup();
         }
     }
@@ -995,7 +988,6 @@ function launchSecondInningsCreaseSetup() {
                      wicketkeeper_id: autodetectedKeeperId
                  })
             }).then(() => {
-                // Instantly clear layout loops and refresh paths completely
                 if (synchronizationLoopIntervalTimer) clearInterval(synchronizationLoopIntervalTimer);
                 location.reload();
             });
