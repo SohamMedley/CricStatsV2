@@ -98,9 +98,9 @@ function loadDashboardMatchHistory() {
             if (inn2) summaryRunsText += ` & ${inn2.total_runs}/${inn2.wickets}`;
 
             htmlBuffer += `
-                <div class="player-row-chip" style="border-bottom: 1px solid rgba(255,255,255,0.04); padding: 14px 0; cursor: pointer;" 
+                <div class="player-row-chip" style="border-bottom: 1px solid rgba(255,255,255,0.04); padding: 14px 0; cursor: pointer; position: relative;" 
                      onclick="window.location.href='${targetRedirectUrl}'">
-                    <div style="display: flex; flex-direction: column; gap: 2px; width: 70%;">
+                    <div style="display: flex; flex-direction: column; gap: 2px; width: 60%;">
                         <strong style="font-size: 0.95rem; color: var(--text-pure); text-transform: uppercase;">
                             ${m.team_a} <span style="color:var(--text-dim); font-size:0.75rem;">vs</span> ${m.team_b}
                         </strong>
@@ -108,9 +108,12 @@ function loadDashboardMatchHistory() {
                             CODE: <span style="color: var(--electric-blue); font-weight:700;">${m.match_code.substring(0,2)}*****</span> | ${summaryRunsText}
                         </span>
                     </div>
-                    <span class="card-label" style="background: ${statusBadgeColor}; font-size: 0.65rem; margin: 0; padding: 6px 10px; min-width: 85px; text-align: center;">
-                        ${statusText}
-                    </span>
+                    <div style="display: flex; gap: 8px; align-items: center;">
+                        <span class="card-label" style="background: ${statusBadgeColor}; font-size: 0.65rem; margin: 0; padding: 6px 10px; min-width: 75px; text-align: center;">
+                            ${statusText}
+                        </span>
+                        <span class="remove-player-trigger" style="padding: 6px 10px;" onclick="deleteMatchRecord(event, '${m.match_code}')">DROP</span>
+                    </div>
                 </div>`;
         });
         feed.innerHTML = htmlBuffer;
@@ -118,6 +121,17 @@ function loadDashboardMatchHistory() {
     .catch(() => {
         feed.innerHTML = `<div class="empty-state-text">Failed to load match ledgers.</div>`;
     });
+}
+
+function deleteMatchRecord(event, matchCode) {
+    event.stopPropagation(); // Execute delete sequence cleanly without triggering the parent redirect overlay
+    if (confirm("Are you sure you want to permanently delete this match ledger? All operational metadata will be erased.")) {
+        secureApiFetch(`/api/match/delete/${matchCode}`, { method: 'DELETE' })
+        .then(res => {
+            triggerGlobalNotificationBanner(res.message, false);
+            loadDashboardMatchHistory();
+        }).catch(() => {});
+    }
 }
 
 /* ─────────────────────────────────────────────────────────────────────────────
@@ -755,10 +769,12 @@ function updateLiveScoreboardUI(state) {
         }
     }
 
-    // Notice we dropped the exact balls check, allowing cancelled overs to trigger the menu
     if(window.isAdmin && inn.total_balls > 0 && inn.total_balls % 6 === 0 && state.status === 'live') {
-        if (!currentOverBowlerPromptActive) {
-            promptNextBowlerAssignment();
+        const expectedOvers = inn.total_balls / 6;
+        if(inn.bowlers && inn.bowlers[inn.current_bowler_id] && inn.bowlers[inn.current_bowler_id].balls == expectedOvers * 6) {
+             if (!currentOverBowlerPromptActive) {
+                 promptNextBowlerAssignment();
+             }
         }
     }
 }
@@ -887,7 +903,6 @@ function promptNextBowlerAssignment() {
             if (targetTeamObject && targetTeamObject.players) {
                 targetTeamObject.players.forEach(pid => {
                     const p = players[pid];
-                    // STRICT LIMIT FILTER: A bowler is exclusively locked to 1 maximum over.
                     const hasBowled = inn.bowlers && inn.bowlers[pid] && inn.bowlers[pid].balls > 0;
                     
                     if (p && pid !== activeOldBowlerId && !hasBowled) {
