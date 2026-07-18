@@ -79,9 +79,15 @@
             </div>
             
             <!-- Replay Engine Transaction Recovery Lever -->
-            <button class="secondary btn-full-width" onclick="submitUndoTransactionRequest()">
+            <button class="secondary btn-full-width" style="margin-top: 14px;" onclick="submitUndoTransactionRequest()">
                 ↺ UNDO LAST BALL DELIVERY
             </button>
+        </div>
+        {% else %}
+        <!-- SPECTATOR READ-ONLY VIEW: Displayed when admin_view evaluates to False -->
+        <div class="bento-card full-width" style="text-align: center; padding: 24px 0; border-top: 1px solid rgba(0, 194, 255, 0.25); background: rgba(255, 255, 255, 0.01);">
+            <span class="captain-badge" style="color: var(--electric-blue); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;">👁️ Spectator Broadcast Active</span>
+            <p class="card-sub-label" style="font-size: 0.85rem; margin-top: 6px; color: var(--text-dim);">Live scoreboard stream is operating in secure read-only mode.</p>
         </div>
         {% endif %}
 
