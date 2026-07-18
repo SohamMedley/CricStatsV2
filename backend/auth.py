@@ -26,4 +26,4 @@ def login_required(f):
                 return jsonify({"status": "error", "message": "Unauthorized access"}), 401
             return redirect(url_for('main.login_page'))
         return f(*args, **kwargs)
-    return decorated_function
+    return decorated_function 
