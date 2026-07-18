@@ -300,13 +300,11 @@ function importExistingTeamBlueprint(teamKey) {
     
     if (operationalNamingTarget === 'A') {
         selectedTeamAPlayers = [...(teamBlueprint.players || [])];
-        // Cross-Purge Validation: Remove from B if they are imported into A
         selectedTeamBPlayers = selectedTeamBPlayers.filter(id => !selectedTeamAPlayers.includes(id));
         document.getElementById('capA').value = teamBlueprint.captain || "";
         if (selectedTeamAPlayers.includes(document.getElementById('capB').value)) document.getElementById('capB').value = "";
     } else {
         selectedTeamBPlayers = [...(teamBlueprint.players || [])];
-        // Cross-Purge Validation: Remove from A if they are imported into B
         selectedTeamAPlayers = selectedTeamAPlayers.filter(id => !selectedTeamBPlayers.includes(id));
         document.getElementById('capB').value = teamBlueprint.captain || "";
         if (selectedTeamBPlayers.includes(document.getElementById('capA').value)) document.getElementById('capA').value = "";
@@ -324,7 +322,6 @@ function rebuildSelectorDropdownPools() {
     let baseA = `<option value="">+ Add Player to Team 1</option>`;
     let baseB = `<option value="">+ Add Player to Team 2</option>`;
 
-    // STRICT MUTUAL EXCLUSION: If assigned to ANY squad, completely hide from both selection drop menus
     rosterMemory.forEach(p => {
         const isInTeamA = selectedTeamAPlayers.includes(p.id);
         const isInTeamB = selectedTeamBPlayers.includes(p.id);
@@ -758,12 +755,10 @@ function updateLiveScoreboardUI(state) {
         }
     }
 
+    // Notice we dropped the exact balls check, allowing cancelled overs to trigger the menu
     if(window.isAdmin && inn.total_balls > 0 && inn.total_balls % 6 === 0 && state.status === 'live') {
-        const expectedOvers = inn.total_balls / 6;
-        if(inn.bowlers && inn.bowlers[inn.current_bowler_id] && inn.bowlers[inn.current_bowler_id].balls == expectedOvers * 6) {
-             if (!currentOverBowlerPromptActive) {
-                 promptNextBowlerAssignment();
-             }
+        if (!currentOverBowlerPromptActive) {
+            promptNextBowlerAssignment();
         }
     }
 }
@@ -892,7 +887,10 @@ function promptNextBowlerAssignment() {
             if (targetTeamObject && targetTeamObject.players) {
                 targetTeamObject.players.forEach(pid => {
                     const p = players[pid];
-                    if (p && pid !== activeOldBowlerId) {
+                    // STRICT LIMIT FILTER: A bowler is exclusively locked to 1 maximum over.
+                    const hasBowled = inn.bowlers && inn.bowlers[pid] && inn.bowlers[pid].balls > 0;
+                    
+                    if (p && pid !== activeOldBowlerId && !hasBowled) {
                         optionsHtml += `<option value="${pid}">${p.name}</option>`;
                     }
                 });
