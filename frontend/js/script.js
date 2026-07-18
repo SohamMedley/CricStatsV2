@@ -124,7 +124,7 @@ function loadDashboardMatchHistory() {
 }
 
 function deleteMatchRecord(event, matchCode) {
-    event.stopPropagation(); // Execute delete sequence cleanly without triggering the parent redirect overlay
+    event.stopPropagation();
     if (confirm("Are you sure you want to permanently delete this match ledger? All operational metadata will be erased.")) {
         secureApiFetch(`/api/match/delete/${matchCode}`, { method: 'DELETE' })
         .then(res => {
@@ -713,7 +713,7 @@ function updateLiveScoreboardUI(state) {
         const s = inn.batsmen[inn.striker_id];
         document.getElementById('rowStriker').innerHTML = `<span>* ${s.name}</span> <span>${s.runs}(${s.balls})</span>`;
     } else {
-        document.getElementById('rowStriker').innerHTML = `<span class="captain-badge" style="color:var(--text-dim);">[CREASE VACANT - AWAITING DEPLOYMENT]</span> <span>-</span>`;
+        document.getElementById('rowStriker').innerHTML = `<span class="captain-badge" style="color:var(--text-dim);">[CREASE VACANT]</span> <span>-</span>`;
         if(window.isAdmin && state.status === 'live' && !currentBatsmanPromptActive) {
             promptNextPlayerReplacement('striker');
         }
@@ -723,7 +723,7 @@ function updateLiveScoreboardUI(state) {
         const ns = inn.batsmen[inn.non_striker_id];
         document.getElementById('rowNonStriker').innerHTML = `<span>${ns.name}</span> <span>${ns.runs}(${ns.balls})</span>`;
     } else {
-        document.getElementById('rowNonStriker').innerHTML = `<span class="captain-badge" style="color:var(--text-dim);">[CREASE VACANT - AWAITING DEPLOYMENT]</span> <span>-</span>`;
+        document.getElementById('rowNonStriker').innerHTML = `<span class="captain-badge" style="color:var(--text-dim);">[CREASE VACANT]</span> <span>-</span>`;
         if(window.isAdmin && state.status === 'live' && !currentBatsmanPromptActive) {
             promptNextPlayerReplacement('non_striker');
         }
@@ -769,9 +769,11 @@ function updateLiveScoreboardUI(state) {
         }
     }
 
+    // MATHEMATICAL LOGIC FIX: Check if current bowler's exact legal ball count signifies end of over
     if(window.isAdmin && inn.total_balls > 0 && inn.total_balls % 6 === 0 && state.status === 'live') {
-        const expectedOvers = inn.total_balls / 6;
-        if(inn.bowlers && inn.bowlers[inn.current_bowler_id] && inn.bowlers[inn.current_bowler_id].balls == expectedOvers * 6) {
+        const currentBowlerBalls = inn.bowlers && inn.bowlers[inn.current_bowler_id] ? inn.bowlers[inn.current_bowler_id].balls : 0;
+        // The bowler strictly reached their 1 over limit! Prompt the UI block!
+        if(currentBowlerBalls > 0 && currentBowlerBalls % 6 === 0) {
              if (!currentOverBowlerPromptActive) {
                  promptNextBowlerAssignment();
              }
@@ -823,16 +825,35 @@ function triggerWicketDismissal(type) {
     }
 }
 
+// DROPDOWN DATA FIX: Cross-reference state and only fetch the current active Bowling Team
 function triggerRunOutModal() {
-    secureApiFetch('/api/players', { method: 'GET' }).then(players => {
-        const sel = document.getElementById('roFielder');
-        if (!sel) return;
-        let optionsHtml = '';
-        Object.values(players).forEach(p => { 
-            optionsHtml += `<option value="${p.id}">${p.name}</option>`; 
+    secureApiFetch('/api/teams', { method: 'GET' }).then(teams => {
+        secureApiFetch('/api/players', { method: 'GET' }).then(players => {
+            const sel = document.getElementById('roFielder');
+            if (!sel) return;
+            
+            const inn = liveStateMemory.innings[`innings_${liveStateMemory.current_innings}`];
+            const bowlingTeamName = inn.bowling_team;
+            const bowlingTeamObj = Object.values(teams).find(t => t.name === bowlingTeamName);
+            
+            let optionsHtml = '';
+            if (bowlingTeamObj && bowlingTeamObj.players) {
+                bowlingTeamObj.players.forEach(pid => {
+                    const p = players[pid];
+                    if (p) {
+                        optionsHtml += `<option value="${p.id}">${p.name}</option>`;
+                    }
+                });
+            } else {
+                // Failsafe fallback
+                Object.values(players).forEach(p => { 
+                    optionsHtml += `<option value="${p.id}">${p.name}</option>`; 
+                });
+            }
+            
+            sel.innerHTML = optionsHtml;
+            document.getElementById('runOutModal').style.display = 'flex';
         });
-        sel.innerHTML = optionsHtml;
-        document.getElementById('runOutModal').style.display = 'flex';
     }).catch(() => {});
 }
 
@@ -903,6 +924,7 @@ function promptNextBowlerAssignment() {
             if (targetTeamObject && targetTeamObject.players) {
                 targetTeamObject.players.forEach(pid => {
                     const p = players[pid];
+                    // STRICT LIMIT FILTER: A bowler is exclusively locked to 1 maximum over.
                     const hasBowled = inn.bowlers && inn.bowlers[pid] && inn.bowlers[pid].balls > 0;
                     
                     if (p && pid !== activeOldBowlerId && !hasBowled) {
