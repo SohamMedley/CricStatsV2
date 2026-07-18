@@ -97,11 +97,42 @@ def scorecard_page(match_code):
 @main.route('/detailed-score/<match_code>')
 def detailed_score_page(match_code):
     admin_view = session.get('admin_logged_in', False)
-    return render_template('detailed_score.html', match_code=match_code, admin_view=admin_view)
+    match_id = db_ref.child('match_codes').child(match_code).get()
+    match_state = db_ref.child('matches').child(match_id).get() if match_id else {}
+    
+    # Defaults out state token fallbacks safely to check status strings
+    match_status = match_state.get('status', 'completed') if match_state else 'completed'
+    return render_template('detailed_score.html', match_code=match_code, admin_view=admin_view, match_status=match_status)
 
 # ─────────────────────────────────────────────────────────────────────────────
 # ATOMIC API LAYER WITH TRANSACTIONS AND SCHEMA GUARDS
 # ─────────────────────────────────────────────────────────────────────────────
+@main.route('/api/matches/history', methods=['GET'])
+def api_matches_history():
+    """Fetches all past and live matches compiled natively within the repository."""
+    try:
+        all_matches = db_ref.child('matches').get() or {}
+        # Convert codes mapping to search references cleanly
+        all_codes = db_ref.child('match_codes').get() or {}
+        code_lookup = {v: k for k, v in all_codes.items()}
+        
+        history_list = []
+        for m_id, m_data in all_matches.items():
+            if not m_data:
+                continue
+            history_list.append({
+                "match_code": code_lookup.get(m_id, "N/A"),
+                "team_a": m_data.get("team_a_name", "Team 1"),
+                "team_b": m_data.get("team_b_name", "Team 2"),
+                "status": m_data.get("status", "live"),
+                "winner": m_data.get("winner", ""),
+                "current_innings": m_data.get("current_innings", 1),
+                "innings": m_data.get("innings", {})
+            })
+        return jsonify(history_list)
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @main.route('/api/players', methods=['GET', 'POST'])
 def api_players():
     if request.method == 'POST':
@@ -279,7 +310,6 @@ def api_update_score(match_code):
         if not current_match_state: 
             return None
             
-        # OVERS BOUNDARY GUARD: Prevent additions if match limits are fully scaled
         if current_match_state.get('status') in ['inn1_completed', 'completed']:
             return current_match_state
             
