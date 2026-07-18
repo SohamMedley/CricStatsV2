@@ -100,7 +100,6 @@ def detailed_score_page(match_code):
     match_id = db_ref.child('match_codes').child(match_code).get()
     match_state = db_ref.child('matches').child(match_id).get() if match_id else {}
     
-    # Defaults out state token fallbacks safely to check status strings
     match_status = match_state.get('status', 'completed') if match_state else 'completed'
     return render_template('detailed_score.html', match_code=match_code, admin_view=admin_view, match_status=match_status)
 
@@ -112,7 +111,6 @@ def api_matches_history():
     """Fetches all past and live matches compiled natively within the repository."""
     try:
         all_matches = db_ref.child('matches').get() or {}
-        # Convert codes mapping to search references cleanly
         all_codes = db_ref.child('match_codes').get() or {}
         code_lookup = {v: k for k, v in all_codes.items()}
         
