@@ -400,29 +400,6 @@ function deleteTeamRecord(tid) {
     }
 }
 
-function commitTeamConfiguration() {
-    const nameA = document.getElementById('teamAName').value.trim();
-    const nameB = document.getElementById('teamBName').value.trim();
-    const cA = document.getElementById('capA').value;
-    const cB = document.getElementById('capB').value;
-    
-    if(!cA || !cB) return triggerGlobalNotificationBanner("Select Captain for both teams first!", true);
-    if(selectedTeamAPlayers.length < 1 || selectedTeamBPlayers.length < 1) {
-        return triggerGlobalNotificationBanner("Roster sets require at least 1 unit element.", true);
-    }
-    
-    const teamAData = { name: nameA, captain: cA, players: selectedTeamAPlayers };
-    const teamBData = { name: nameB, captain: cB, players: selectedTeamBPlayers };
-    
-    Promise.all([
-        secureApiFetch('/api/teams', { method:'POST', body:JSON.stringify(teamAData) }),
-        secureApiFetch('/api/teams', { method:'POST', body:JSON.stringify(teamBData) })
-    ]).then(() => {
-        triggerGlobalNotificationBanner("✓ Teams Blueprint Saved Successfully", false);
-        setTimeout(() => { window.location.href = '/home'; }, 1000);
-    }).catch(() => {});
-}
-
 /* ─────────────────────────────────────────────────────────────────────────────
    UPGRADED MATCH ENGINE DYNAMIC PANELS & POOL SEGREGATION
    ───────────────────────────────────────────────────────────────────────────── */
@@ -617,13 +594,13 @@ function launchMatchEngine() {
 
 let liveStateMemory = null;
 let currentOverBowlerPromptActive = false;
-// SECURITY LOCK ADDED: Active modal blocking token flags
 let currentBatsmanPromptActive = false;
 let synchronizationLoopIntervalTimer = null;
 
 function startLiveScoreSynchronizationLoop() {
     fetchLiveScoreboardData();
-    synchronizationLoopIntervalTimer = setInterval(fetchLiveScoreboardData, 4000);
+    // Non-blocking background telemetry sync polling every 3 seconds (reduces spectator delay latency)
+    synchronizationLoopIntervalTimer = setInterval(fetchLiveScoreboardData, 3000);
 }
 
 function fetchLiveScoreboardData() {
@@ -661,8 +638,8 @@ function updateLiveScoreboardUI(state) {
         const s = inn.batsmen[inn.striker_id];
         document.getElementById('rowStriker').innerHTML = `<span>* ${s.name}</span> <span>${s.runs}(${s.balls})</span>`;
     } else {
-        document.getElementById('rowStriker').innerHTML = `<span class="captain-badge">[Vacant Crease Strike]</span> <span>-</span>`;
-        // INTERCEPT TRIGGER: Guard against background layout polling overlaps using isolation flags
+        document.getElementById('rowStriker').innerHTML = `<span class="captain-badge" style="color:var(--text-dim);">[CREASE VACANT - AWAITING DEPLOYMENT]</span> <span>-</span>`;
+        // INTERCEPT TRIGGER CONTEXT CONTROL: Only launch prompt overrides if active session has admin privileges
         if(window.isAdmin && state.status === 'live' && !currentBatsmanPromptActive) {
             promptNextPlayerReplacement('striker');
         }
@@ -672,8 +649,8 @@ function updateLiveScoreboardUI(state) {
         const ns = inn.batsmen[inn.non_striker_id];
         document.getElementById('rowNonStriker').innerHTML = `<span>${ns.name}</span> <span>${ns.runs}(${ns.balls})</span>`;
     } else {
-        document.getElementById('rowNonStriker').innerHTML = `<span class="captain-badge">[Vacant Crease Non-Strike]</span> <span>-</span>`;
-        // INTERCEPT TRIGGER: Guard against background layout polling overlaps using isolation flags
+        document.getElementById('rowNonStriker').innerHTML = `<span class="captain-badge" style="color:var(--text-dim);">[CREASE VACANT - AWAITING DEPLOYMENT]</span> <span>-</span>`;
+        // INTERCEPT TRIGGER CONTEXT CONTROL: Only launch prompt overrides if active session has admin privileges
         if(window.isAdmin && state.status === 'live' && !currentBatsmanPromptActive) {
             promptNextPlayerReplacement('non_striker');
         }
@@ -682,6 +659,8 @@ function updateLiveScoreboardUI(state) {
     if(inn.current_bowler_id && inn.bowlers && inn.bowlers[inn.current_bowler_id]) {
         const b = inn.bowlers[inn.current_bowler_id];
         document.getElementById('rowBowler').innerHTML = `<span>${b.name}</span> <span>${b.overs_bowled}-${b.maidens}-${b.runs}-${b.wickets}</span>`;
+    } else {
+        document.getElementById('rowBowler').innerHTML = `<span>Awaiting Bowler...</span> <span>0.0-0-0-0</span>`;
     }
 
     const crr = (inn.total_runs / (inn.total_balls / 6 || 1)).toFixed(2);
@@ -693,11 +672,18 @@ function updateLiveScoreboardUI(state) {
         const totalMaxBalls = state.max_overs * 6;
         const ballsRemaining = totalMaxBalls - inn.total_balls;
         const rrr = (runsNeeded / (ballsRemaining / 6 || 1)).toFixed(2);
-        document.getElementById('rrrVal').innerText = `${rrr} (Need ${runsNeeded} off ${ballsRemaining} bls)`;
         
-        if(inn.total_runs >= target && state.status === 'live' && window.isAdmin) {
+        if (runsNeeded <= 0) {
+            document.getElementById('rrrVal').innerText = "Target Achieved";
+        } else if (ballsRemaining <= 0) {
+            document.getElementById('rrrVal').innerText = "Innings Over";
+        } else {
+            document.getElementById('rrrVal').innerText = `${rrr} (Need ${runsNeeded} off ${ballsRemaining} bls)`;
+        }
+        
+        if(inn.total_runs >= target && state.status === 'live') {
             triggerMatchCompletionPopup();
-        } else if((inn.wickets >= 10 || ballsRemaining <= 0) && state.status === 'live' && window.isAdmin) {
+        } else if((inn.wickets >= 10 || ballsRemaining <= 0) && state.status === 'live') {
             triggerMatchCompletionPopup();
         } else if (state.status === 'completed') {
             triggerMatchCompletionPopup();
@@ -705,7 +691,7 @@ function updateLiveScoreboardUI(state) {
     } else {
         const totalMaxBalls = state.max_overs * 6;
         const ballsRemaining = totalMaxBalls - inn.total_balls;
-        if((inn.wickets >= 10 || ballsRemaining <= 0) && state.status === 'live' && window.isAdmin) {
+        if((inn.wickets >= 10 || ballsRemaining <= 0) && state.status === 'live') {
             triggerInningsBreakPopup();
         }
     }
@@ -721,6 +707,8 @@ function updateLiveScoreboardUI(state) {
 }
 
 function submitBallRecord(type, runs, extraType=null, dismissal=null, fielderId=null, runOutBatsmanId=null, bowlerId=null, bowlerName=null, batsmanId=null, batsmanName=null, positionKey=null) {
+    if (!window.isAdmin) return; // Prevent speculative execution if layout binds accidentally fire
+    
     const payload = { 
         event_type: type, 
         runs_scored: runs, 
@@ -821,7 +809,7 @@ function commitNewBatsman() {
     const name = sel.options[sel.selectedIndex].text;
     
     document.getElementById('newBatsmanModal').style.display = 'none';
-    currentBatsmanPromptActive = false; // Lift protection block trigger securely
+    currentBatsmanPromptActive = false;
     
     submitBallRecord('BATSMAN_CHANGE', 0, null, null, null, null, null, null, pid, name, trackingReplacementKey);
 }
@@ -873,12 +861,23 @@ function triggerInningsBreakPopup() {
         Target operational threshold set to: <strong>${inn.total_runs + 1} runs</strong>.
     `;
     const btn = document.getElementById('innSumActionBtn');
-    btn.innerText = "START SECOND INNINGS";
-    btn.onclick = launchSecondInningsCreaseSetup;
+    
+    if (window.isAdmin) {
+        btn.innerText = "START SECOND INNINGS";
+        btn.disabled = false;
+        btn.style.opacity = "1";
+        btn.onclick = launchSecondInningsCreaseSetup;
+    } else {
+        btn.innerText = "AWAITING ADMIN FOR INNINGS 2...";
+        btn.disabled = true;
+        btn.style.opacity = "0.5";
+        btn.onclick = null;
+    }
     document.getElementById('inningsSummaryModal').style.display = 'flex';
 }
 
 function launchSecondInningsCreaseSetup() {
+    if (!window.isAdmin) return;
     document.getElementById('inningsSummaryModal').style.display = 'none';
     
     secureApiFetch('/api/teams', { method: 'GET' }).then(teams => {
@@ -934,10 +933,14 @@ function triggerMatchCompletionPopup() {
         document.getElementById('innSumTopPerformers').innerHTML = `<strong>WINNER: ${liveStateMemory.winner.toUpperCase()}</strong>`;
         const btn = document.getElementById('innSumActionBtn');
         btn.innerText = "VIEW DETAILED SCORECARD";
+        btn.disabled = false;
+        btn.style.opacity = "1";
         btn.onclick = () => { window.location.href = `/detailed-score/${window.matchCode}`; };
         document.getElementById('inningsSummaryModal').style.display = 'flex';
         return;
     }
+
+    if (!window.isAdmin) return; // Spectators freeze loop configuration until final commit processes
 
     secureApiFetch(`/api/match/complete/${window.matchCode}`, { method: 'POST' })
     .then(data => {
@@ -1046,3 +1049,7 @@ function renderDetailedStatisticsView(matchCode) {
         area.innerHTML = `<div class="empty-state-text">Failed to retrieve comprehensive match metrics.</div>`;
     });
 }
+
+window.addEventListener("beforeunload", () => {
+    if (synchronizationLoopIntervalTimer) clearInterval(synchronizationLoopIntervalTimer);
+});
