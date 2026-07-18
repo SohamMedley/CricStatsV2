@@ -18,8 +18,8 @@
                 <button class="nav-back-btn" onclick="window.location.href='/home'">DASHBOARD</button>
                 {% endif %}
             {% else %}
-                <!-- Spectator Safety Back Navigation Lever -->
-                <button class="nav-back-btn" onclick="window.location.href='/scorecard/{{match_code}}'">LIVE PANEL</button>
+                <!-- Spectator explicitly gets a back button to live tracking -->
+                <button class="nav-back-btn" onclick="window.location.href='/scorecard/{{match_code}}'">← LIVE</button>
             {% endif %}
         </div>
 
@@ -43,8 +43,9 @@
             {% endif %}
         </div>
         {% else %}
+        <!-- Clean Spectator Layout Control Deck without Dashboard access -->
         <div class="control-deck-footer" style="grid-template-columns: 1fr;">
-            <button onclick="window.location.href='/scorecard/{{match_code}}'">← BACK TO LIVE VIEW</button>
+            <button class="btn-full-width" style="background: var(--cobalt-core); color: var(--text-pure);" onclick="window.location.href='/scorecard/{{match_code}}'">← BACK TO LIVE SCORECARD</button>
         </div>
         {% endif %}
     </div>
