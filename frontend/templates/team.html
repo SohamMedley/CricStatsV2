@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Squad Configurations - CricStats</title>
+    <link rel="stylesheet" href="/frontend/css/style.css">
+</head>
+<body>
+    <div id="feedbackToast" class="feedback-toast-banner"></div>
+
+    <div class="mobile-container">
+        <div class="page-header">
+            <h2 class="page-title">Configure Teams</h2>
+            <button class="nav-back-btn" onclick="window.location.href='/home'">DASHBOARD</button>
+        </div>
+        
+        <div class="bento-stack">
+            <!-- Dynamic Synchronized Dual Pane Roster Form Workspace Section -->
+            <div class="bento-card full-width" style="padding: 24px 20px;">
+                <span class="card-label">Squad Identity Blueprints</span>
+                <div class="dual-pane-layout" style="margin-top: 16px;">
+                    
+                    <!-- Team Alpha Roster Configuration Panel -->
+                    <div class="pane-side" id="paneTeamA">
+                        <div class="pane-placeholder-btn" onclick="openNamingModal('A')">+</div>
+                        <span class="pane-identity-label" id="labelTeamAName">Team 1</span>
+                        <div style="width: 100%; margin-top: 10px;">
+                            <span class="pool-player-meta" style="margin-bottom: 4px;">CAPTAIN</span>
+                            <select id="capA" onchange="allocateCaptainSync('A')"><option value="">Select Capt</option></select>
+                        </div>
+                        <div style="width: 100%; margin-top: 8px;">
+                            <span class="pool-player-meta" style="margin-bottom: 4px;">ADD PLAYERS</span>
+                            <select id="dropdownRosterA" onchange="appendPlayerFromDropdown('A')"><option value="">Select Player</option></select>
+                        </div>
+                        <div id="teamAPlayers" class="squad-list-container" style="width: 100%; margin-top: 12px;"></div>
+                    </div>
+
+                    <!-- Layout Vertical Break Bar -->
+                    <div class="pane-divider-line"></div>
+
+                    <!-- Team Omega Roster Configuration Panel -->
+                    <div class="pane-side" id="paneTeamB">
+                        <div class="pane-placeholder-btn" onclick="openNamingModal('B')">+</div>
+                        <span class="pane-identity-label" id="labelTeamBName">Team 2</span>
+                        <div style="width: 100%; margin-top: 10px;">
+                            <span class="pool-player-meta" style="margin-bottom: 4px;">CAPTAIN</span>
+                            <select id="capB" onchange="allocateCaptainSync('B')"><option value="">Select Capt</option></select>
+                        </div>
+                        <div style="width: 100%; margin-top: 8px;">
+                            <span class="pool-player-meta" style="margin-bottom: 4px;">ADD PLAYERS</span>
+                            <select id="dropdownRosterB" onchange="appendPlayerFromDropdown('B')"><option value="">Select Player</option></select>
+                        </div>
+                        <div id="teamBPlayers" class="squad-list-container" style="width: 100%; margin-top: 12px;"></div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Database Clean & Maintenance Section Box -->
+            <div class="bento-card full-width" style="padding: 24px 20px;">
+                <span class="card-label" style="background: var(--system-alert); box-shadow: 0 4px 14px rgba(255, 51, 75, 0.3);">DATABASE MAINTENANCE</span>
+                <span class="card-sub-label" style="margin-bottom: 8px;">Delete historical blueprint configs to prevent data overload:</span>
+                <div id="historicalTeamsContainer" class="squad-list-container" style="gap: 8px; max-height: 200px; overflow-y: auto;">
+                    <!-- Rendered dynamically -->
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" id="teamAName" value="Team 1">
+        <input type="hidden" id="teamBName" value="Team 2">
+
+        <button class="btn-full-width" onclick="commitTeamConfiguration()">SYNC TEAMS & SAVE</button>
+    </div>
+
+    <!-- Inline Naming Overlays Engine Block -->
+    <div id="namingModal" class="modal-overlay">
+        <div class="modal-content">
+            <span class="card-label" id="namingModalLabel">Configure Team</span>
+            
+            <div id="teamNamingFormSegment">
+                <span class="card-sub-label">Enter New Team Label Name:</span>
+                <input type="text" id="tempTeamNameField" placeholder="Ex: Mumbai Warriors...">
+            </div>
+
+            <!-- NO-CLONE PRE-BUILT TEAM LOADER SELECTOR SYSTEM ROW -->
+            <div id="historicalSelectSegment" style="margin-top: 12px;">
+                <span class="card-sub-label">Or Select Existing Pre-Built Team:</span>
+                <select id="historicalTeamSelectorDropdown" onchange="importExistingTeamBlueprint(this.value)"></select>
+            </div>
+
+            <div class="control-deck-footer">
+                <button class="secondary" onclick="closeNamingModal()">Cancel</button>
+                <button onclick="saveNamingModalValue()">Apply</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/frontend/js/script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", setupTeamConfigScreen);
+    </script>
+</body>
+</html>

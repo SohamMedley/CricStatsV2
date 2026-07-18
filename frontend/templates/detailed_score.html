@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detailed Scorecard - CricStats</title>
+    <link rel="stylesheet" href="/frontend/css/style.css">
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Top Navigation Header Component Layer -->
+        <div class="page-header">
+            <h2 class="page-title">Full Scorecard</h2>
+            <button class="nav-back-btn" onclick="window.location.href='/home'">DASHBOARD</button>
+        </div>
+
+        <!-- Dynamic Match Outcome Banner Managed by Script -->
+        <div id="matchWinnerBanner" class="score-header-box" style="display: none;"></div>
+
+        <!-- Central Operational Layout Stack for Analytics and Tables -->
+        <div id="detailedOutputArea" class="bento-stack">
+            <!-- Data tables, economy rates, and logs rendered dynamically via script.js -->
+        </div>
+
+        <!-- Bottom Navigation Control Deck Footer -->
+        <div class="control-deck-footer">
+            <button class="secondary" onclick="window.location.href='/home'">Return to Dashboard</button>
+            <button onclick="window.location.href='/home'">Dashboard Main</button>
+        </div>
+    </div>
+    <script src="/frontend/js/script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            renderDetailedStatisticsView("{{match_code}}");
+        });
+    </script>
+</body>
+</html>

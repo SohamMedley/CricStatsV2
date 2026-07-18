@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Match Setup - CricStats</title>
+    <link rel="stylesheet" href="/frontend/css/style.css">
+</head>
+<body>
+    <div id="feedbackToast" class="feedback-toast-banner"></div>
+
+    <div class="mobile-container">
+        <div class="page-header">
+            <h2 class="page-title">Match Setup</h2>
+            <button class="nav-back-btn" onclick="window.location.href='/home'">DASHBOARD</button>
+        </div>
+        
+        <div class="bento-stack">
+            <!-- Adversary Allocation Mapping -->
+            <div class="bento-card full-width">
+                <span class="card-label">Adversary Selection</span>
+                
+                <span class="card-sub-label">Team A (Home Side)</span>
+                <select id="mTeamA" onchange="syncMatchPlayers()"></select>
+                
+                <span class="card-sub-label">Team B (Away Side)</span>
+                <select id="mTeamB" onchange="syncMatchPlayers()"></select>
+                
+                <span class="card-sub-label">Overs Allocation Limit</span>
+                <select id="mOvers">
+                    <option value="1">1 Over</option>
+                    <option value="2">2 Overs</option>
+                    <option value="4">4 Overs</option>
+                    <option value="5">5 Overs</option>
+                    <option value="6">6 Overs</option>
+                    <option value="7">7 Overs</option>
+                </select>
+            </div>
+
+            <!-- Enhanced Toss Mechanics Interaction Controllers Selection Panel -->
+            <div class="bento-card full-width">
+                <span class="card-label">Toss Decision Matrix</span>
+                
+                <span class="card-sub-label" style="margin-bottom: 8px;">Who Won The Toss?</span>
+                <div class="form-toggle-pill-row">
+                    <div id="tossPillA" class="toggle-pill-option active" onclick="selectTossWinnerToggle('A')">Team A</div>
+                    <div id="tossPillB" class="toggle-pill-option" onclick="selectTossWinnerToggle('B')">Team B</div>
+                </div>
+                <input type="hidden" id="mTossWinner" value="A">
+                
+                <span class="card-sub-label" style="margin-top: 14px; margin-bottom: 8px;">Elected Decision Choice</span>
+                <div class="form-toggle-pill-row">
+                    <div id="decisionPillBat" class="toggle-pill-option active" onclick="selectDecisionToggle('Bat')">BATTING</div>
+                    <div id="decisionPillBowl" class="toggle-pill-option" onclick="selectDecisionToggle('Bowl')">BOWLING</div>
+                </div>
+                <input type="hidden" id="mDecision" value="Bat">
+            </div>
+
+            <!-- Deep Crease Deployment Initialization Selection Panel -->
+            <div class="bento-card full-width">
+                <span class="card-label">Crease Assignment Configuration</span>
+                
+                <span class="card-sub-label">Opening Striker Batsman</span>
+                <select id="mStriker"></select>
+                
+                <span class="card-sub-label">Opening Non-Striker Batsman</span>
+                <select id="mNonStriker"></select>
+                
+                <span class="card-sub-label">Opening Bowler</span>
+                <select id="mBowler"></select>
+                
+                <span class="card-sub-label">Active Wicketkeeper</span>
+                <select id="mKeeper"></select>
+            </div>
+        </div>
+
+        <button class="btn-full-width" onclick="launchMatchEngine()">START MATCH ENGINE</button>
+    </div>
+    
+    <script src="/frontend/js/script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", initMatchSetupFields);
+    </script>
+</body>
+</html>

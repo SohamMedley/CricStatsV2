@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Player Profiles - CricStats</title>
+    <link rel="stylesheet" href="/frontend/css/style.css">
+</head>
+<body>
+    <div id="feedbackToast" class="feedback-toast-banner"></div>
+
+    <div class="mobile-container">
+        <div class="page-header">
+            <h2 class="page-title">Player Profiles</h2>
+            <button class="nav-back-btn" onclick="window.location.href='/home'">DASHBOARD</button>
+        </div>
+        
+        <!-- Live Realtime Roster Filter Search Feed Component -->
+        <div class="bento-card full-width" style="padding: 0 0 16px 0; border: none;">
+            <input type="text" id="playerSearchBar" placeholder="🔍 SEARCH PROFILES..." onkeyup="filterPlayerRosterFeed()">
+        </div>
+
+        <div id="playerListContainer" class="bento-stack">
+            <!-- Rendered dynamically via script.js -->
+        </div>
+
+        <div id="actionContainer"></div>
+
+        <div id="playerModal" class="modal-overlay">
+            <div class="modal-content">
+                <span class="card-label">New Profile</span>
+                
+                <span class="card-sub-label">Full Name</span>
+                <input type="text" id="pName" placeholder="Enter Full Name...">
+                
+                <span class="card-sub-label">Field Role Assignment</span>
+                <select id="pRole">
+                    <option value="Batsman">Batsman</option>
+                    <option value="Bowler">Bowler</option>
+                    <option value="All-rounder">All-rounder</option>
+                    <option value="Wicketkeeper">Wicketkeeper</option>
+                </select>
+                
+                <span class="card-sub-label">Dominant Hand Configuration</span>
+                <select id="pHand">
+                    <option value="Right-handed">Right-handed</option>
+                    <option value="Left-handed">Left-handed</option>
+                </select>
+                
+                <div class="control-deck-footer">
+                    <button class="secondary" onclick="togglePlayerModal(false)">Cancel</button>
+                    <button onclick="savePlayerProfile()">Save Profile</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="/frontend/js/script.js"></script>
+    <script>
+        document.addEventListener("DOMContentLoaded", loadPlayerRoster);
+    </script>
+</body>
+</html>

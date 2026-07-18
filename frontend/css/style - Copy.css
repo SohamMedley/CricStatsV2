@@ -1,0 +1,528 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+:root {
+    /* Pure Pinterest Bright Canvas Palette */
+    --bg-color: #F7F7F8;
+    --canvas-bg: #F7F7F8;
+    --card-bg: #FFFFFF;
+    
+    /* Elegant High-Contrast Typography */
+    --primary-ink: #111111;
+    --secondary-ink: #333333;
+    --muted-gray: #767676;
+    --light-gray-line: #EDEDED;
+    
+    /* Pinterest Iconic Colors & System Accents */
+    --pinterest-red: #E60023;
+    --pinterest-red-hover: #AD0018;
+    --accent-blue: #0076FF;
+    --accent-green: #00875A;
+    
+    /* Floating Soft Blurs & Smooth Radii */
+    --pinterest-shadow: 0px 8px 24px rgba(0, 0, 0, 0.04), 0px 2px 6px rgba(0, 0, 0, 0.02);
+    --pinterest-shadow-hover: 0px 16px 32px rgba(0, 0, 0, 0.08), 0px 4px 12px rgba(0, 0, 0, 0.04);
+    
+    /* Curvatures */
+    --radius-capsule: 9999px;
+    --radius-card: 24px;
+    --radius-input: 16px;
+    
+    /* Smooth Fluid Animation Configs */
+    --transition-smooth: cubic-bezier(0.25, 1, 0.5, 1);
+    --speed: 0.3s;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    letter-spacing: -0.02em;
+}
+
+body {
+    background-color: var(--canvas-bg);
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    min-height: 100vh;
+}
+
+/* Pinterest Mobile Column Feed Wrapper */
+.mobile-container {
+    width: 100%;
+    max-width: 440px;
+    background-color: var(--bg-color);
+    color: var(--primary-ink);
+    min-height: 100vh;
+    padding: 32px 20px;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+}
+
+/* Clean Top Viewport Header Layouts */
+.top-nav {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+}
+
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--light-gray-line);
+    padding-bottom: 16px;
+    width: 100%;
+}
+
+.page-title {
+    font-size: 1.8rem;
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    color: var(--primary-ink);
+}
+
+.nav-back-btn {
+    padding: 8px 18px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: #EFEFEF;
+    color: var(--primary-ink);
+    border: none;
+    border-radius: var(--radius-capsule);
+    cursor: pointer;
+    transition: background var(--speed) var(--transition-smooth);
+}
+
+.nav-back-btn:hover {
+    background: #E2E2E2;
+}
+
+/* Clean Pinterest Identity Tag Trigger */
+.logo-btn {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--card-bg);
+    border: none;
+    padding: 10px 20px;
+    border-radius: var(--radius-capsule);
+    box-shadow: var(--pinterest-shadow);
+    cursor: pointer;
+    transition: transform var(--speed) var(--transition-smooth), box-shadow var(--speed) var(--transition-smooth);
+}
+
+.logo-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: var(--pinterest-shadow-hover);
+}
+
+.logo-dot {
+    width: 10px;
+    height: 10px;
+    background-color: var(--pinterest-red);
+    border-radius: 50%;
+}
+
+.logo-text {
+    font-weight: 800;
+    font-size: 0.9rem;
+    color: var(--pinterest-red);
+}
+
+/* Masonry Shuffled Grids & Collection Stacks */
+.bento-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+    width: 100%;
+}
+
+.bento-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    width: 100%;
+}
+
+/* Soft Floating Visual Cards */
+.bento-card {
+    background: var(--card-bg);
+    border: none;
+    padding: 24px;
+    border-radius: var(--radius-card);
+    box-shadow: var(--pinterest-shadow);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 12px;
+    transition: transform var(--speed) var(--transition-smooth), box-shadow var(--speed) var(--transition-smooth);
+}
+
+.bento-card[onclick] {
+    cursor: pointer;
+}
+
+.bento-card[onclick]:hover {
+    transform: translateY(-4px) scale(1.01);
+    box-shadow: var(--pinterest-shadow-hover);
+}
+
+.bento-card[onclick]:active {
+    transform: scale(0.99);
+}
+
+.bento-card.full-width {
+    grid-column: span 2;
+    width: 100%;
+}
+
+/* Pure Text Descriptions Labels */
+.card-label {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--pinterest-red);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.card-sub-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--muted-gray);
+    margin-top: 2px;
+}
+
+/* Smooth Curved Input Interfaces */
+input, select {
+    width: 100%;
+    padding: 16px;
+    border: 2px solid #EFEFEF;
+    background: #FFFFFF;
+    color: var(--primary-ink);
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    border-radius: var(--radius-input);
+    transition: border-color var(--speed) var(--transition-smooth);
+}
+
+input::placeholder {
+    color: #B2B2B2;
+}
+
+input:focus, select:focus {
+    border-color: var(--primary-ink);
+}
+
+/* Pinterest Red Primary Dynamic Buttons */
+button {
+    background: var(--pinterest-red);
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    font-size: 1rem;
+    font-weight: 700;
+    border-radius: var(--radius-capsule);
+    cursor: pointer;
+    transition: background var(--speed) var(--transition-smooth), transform 0.1s ease;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+button:hover {
+    background: var(--pinterest-red-hover);
+}
+
+button:active {
+    transform: scale(0.98);
+}
+
+button.secondary {
+    background: #EFEFEF;
+    color: var(--primary-ink);
+}
+
+button.secondary:hover {
+    background: #E2E2E2;
+}
+
+/* Real-Time Board Viewport Header */
+.score-header-box {
+    border: none;
+    background: var(--card-bg);
+    color: var(--primary-ink);
+    padding: 36px 20px;
+    text-align: center;
+    border-radius: var(--radius-card);
+    box-shadow: var(--pinterest-shadow);
+}
+
+.score-header-box h2 {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: var(--secondary-ink);
+}
+
+.score-header-box h1 {
+    font-size: 4.8rem;
+    font-weight: 800;
+    letter-spacing: -0.06em;
+    margin: 8px 0;
+    color: var(--primary-ink);
+}
+
+.score-header-box p {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--muted-gray);
+}
+
+/* Grid-Layout Scoring Interaction Pads */
+.action-pad-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-top: 20px;
+}
+
+.btn-run { 
+    background: #EFEFEF; 
+    color: var(--primary-ink); 
+    border-radius: var(--radius-input);
+    font-weight: 800;
+}
+.btn-run:hover {
+    background: #E2E2E2;
+}
+
+.btn-extra { 
+    background: rgba(0, 118, 255, 0.08); 
+    color: var(--accent-blue); 
+    border-radius: var(--radius-input);
+    font-weight: 800;
+}
+.btn-extra:hover {
+    background: rgba(0, 118, 255, 0.14);
+}
+
+.btn-wicket { 
+    background: rgba(230, 0, 35, 0.08); 
+    color: var(--pinterest-red); 
+    grid-column: span 2;
+    border-radius: var(--radius-input);
+    font-weight: 800;
+}
+.btn-wicket:hover {
+    background: rgba(230, 0, 35, 0.14);
+}
+
+.btn-full-width {
+    width: 100%;
+}
+
+/* Shuffled Roster Rows Components */
+.squad-list-container {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.player-row-chip {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--card-bg);
+    padding: 16px 24px;
+    border-radius: var(--radius-input);
+    box-shadow: var(--pinterest-shadow);
+}
+
+.border-none {
+    box-shadow: none !important;
+    background: transparent !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    color: var(--muted-gray) !important;
+}
+
+.font-bold {
+    font-weight: 700;
+    color: var(--primary-ink) !important;
+}
+
+.captain-badge {
+    color: var(--accent-blue);
+    font-weight: 700;
+}
+
+.remove-player-trigger {
+    color: var(--pinterest-red);
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.empty-state-text {
+    font-size: 0.95rem;
+    color: var(--muted-gray);
+    text-align: center;
+    padding: 32px 0;
+    font-weight: 600;
+}
+
+/* Pool Filters & Feeds */
+.pool-search-container {
+    margin-top: 8px;
+}
+
+.available-pool-scroll {
+    max-height: 260px;
+    overflow-y: auto;
+    background: var(--card-bg);
+    border-radius: var(--radius-card);
+    box-shadow: var(--pinterest-shadow);
+    padding: 12px;
+}
+
+.pool-item-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--light-gray-line);
+}
+
+.pool-item-row:last-child {
+    border-bottom: none;
+}
+
+.pool-player-info {
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.pool-player-meta {
+    font-size: 0.8rem;
+    color: var(--muted-gray);
+    margin-top: 2px;
+    font-weight: 600;
+    display: block;
+}
+
+.action-chip-group {
+    display: flex;
+    gap: 8px;
+}
+
+.chip-add-btn {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    border: none;
+    border-radius: var(--radius-capsule);
+    cursor: pointer;
+}
+
+.chip-add-btn.team-a { background: var(--primary-ink); color: white; }
+.chip-add-btn.team-b { background: var(--pinterest-red); color: white; }
+
+.control-deck-footer {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: auto;
+    padding-top: 24px;
+}
+
+/* Clean Clean Data Analytics Tables */
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 12px 0;
+}
+
+th {
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--muted-gray);
+    text-transform: uppercase;
+    border-bottom: 2px solid var(--light-gray-line);
+    padding-bottom: 12px;
+}
+
+.text-left { text-align: left !important; }
+.text-right { text-align: right !important; }
+.text-center { text-align: center !important; }
+
+td {
+    padding: 16px 0;
+    font-size: 0.95rem;
+    font-weight: 600;
+    border-bottom: 1px solid var(--light-gray-line);
+    color: var(--secondary-ink);
+}
+
+tr:last-child td {
+    border-bottom: none;
+}
+
+/* Visual Overlay Windows */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(17, 17, 17, 0.4);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    padding: 20px;
+}
+
+.modal-content {
+    background: var(--card-bg);
+    border: none;
+    padding: 32px;
+    width: 100%;
+    max-width: 380px;
+    border-radius: var(--radius-card);
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    box-shadow: 0px 24px 64px rgba(0, 0, 0, 0.12);
+}
+
+.modal-content h3 {
+    font-size: 1.4rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--primary-ink);
+}
+
+/* Floating Clean Banner Alerts */
+.feedback-toast-banner {
+    position: fixed;
+    top: 32px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 90%;
+    max-width: 360px;
+    background: var(--primary-ink);
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    border-radius: var(--radius-capsule);
+    text-align: center;
+    font-weight: 700;
+    font-size: 0.95rem;
+    box-shadow: 0px 16px 48px rgba(0, 0, 0, 0.15);
+    z-index: 2000;
+    display: none;
+}

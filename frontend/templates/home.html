@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - CricStats</title>
+    <link rel="stylesheet" href="/frontend/css/style.css">
+</head>
+<body>
+    <div class="mobile-container">
+        <!-- Unified Application Header Component Layer -->
+        <div class="page-header">
+            <h2 class="page-title">Dashboard</h2>
+            <button class="nav-back-btn" onclick="window.location.href='/logout'">LOGOUT</button>
+        </div>
+
+        <!-- Centralized Bento Navigation Network -->
+        <div class="bento-grid">
+            <!-- Primary Action Card: Player Profiling -->
+            <div class="bento-card full-width" onclick="window.location.href='/player'">
+                <div>
+                    <span class="card-label">Roster Setup</span>
+                    <h3>PLAYER PROFILES</h3>
+                </div>
+                <span class="card-sub-label">Manage & Add Roster Units →</span>
+            </div>
+            
+            <!-- Secondary Action Card: Group Frameworks -->
+            <div class="bento-card" onclick="window.location.href='/team'">
+                <div>
+                    <span class="card-label">Squad Configurations</span>
+                    <h3>TEAMS</h3>
+                </div>
+                <span class="card-sub-label">Calibrate Groups →</span>
+            </div>
+
+            <!-- Tertiary Action Card: Engine Deployment -->
+            <div class="bento-card" onclick="window.location.href='/match'">
+                <div>
+                    <span class="card-label">Live Score System</span>
+                    <h3>NEW MATCH</h3>
+                </div>
+                <span class="card-sub-label">Initialize Engine →</span>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
