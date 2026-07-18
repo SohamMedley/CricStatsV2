@@ -105,7 +105,7 @@ function loadDashboardMatchHistory() {
                             ${m.team_a} <span style="color:var(--text-dim); font-size:0.75rem;">vs</span> ${m.team_b}
                         </strong>
                         <span class="pool-player-meta" style="font-size: 0.8rem; color: var(--text-silver); font-family: 'Space Grotesk', sans-serif;">
-                            CODE: <span style="color: var(--electric-blue); font-weight:700;">${m.match_code[:2]}*****</span> | ${summaryRunsText}
+                            CODE: <span style="color: var(--electric-blue); font-weight:700;">${m.match_code.substring(0,2)}*****</span> | ${summaryRunsText}
                         </span>
                     </div>
                     <span class="card-label" style="background: ${statusBadgeColor}; font-size: 0.65rem; margin: 0; padding: 6px 10px; min-width: 85px; text-align: center;">
@@ -127,7 +127,6 @@ function loadPlayerRoster() {
     secureApiFetch('/api/players', { method: 'GET' })
     .then(players => {
         const container = document.getElementById('playerListContainer');
-        const action = document.getElementById('actionContainer');
         if (!container) return;
         
         const count = Object.keys(players).length;
@@ -319,7 +318,6 @@ function rebuildSelectorDropdownPools() {
     let baseA = `<option value="">+ Add Player to Team 1</option>`;
     let baseB = `<option value="">+ Add Player to Team 2</option>`;
 
-    // MUTUAL EXCLUSION FILTER: Hide selected players from opposite dropdown lists completely
     rosterMemory.forEach(p => {
         if (!selectedTeamAPlayers.includes(p.id) && !selectedTeamBPlayers.includes(p.id)) {
             baseA += `<option value="${p.id}">${p.name} (${p.role})</option>`;
@@ -682,6 +680,7 @@ let synchronizationLoopIntervalTimer = null;
 
 function startLiveScoreSynchronizationLoop() {
     fetchLiveScoreboardData();
+    // Non-blocking real-time interval synchronization handler running at 3s frequency
     synchronizationLoopIntervalTimer = setInterval(fetchLiveScoreboardData, 3000);
 }
 
@@ -692,12 +691,6 @@ function fetchLiveScoreboardData() {
     .then(state => {
         if(state) {
             liveStateMemory = state;
-            if (state.status === 'completed') {
-                if (synchronizationLoopIntervalTimer) {
-                    clearInterval(synchronizationLoopIntervalTimer);
-                    synchronizationLoopIntervalTimer = null;
-                }
-            }
             updateLiveScoreboardUI(state);
         }
     }).catch(() => {});
@@ -761,17 +754,13 @@ function updateLiveScoreboardUI(state) {
             document.getElementById('rrrVal').innerText = `${rrr} (Need ${runsNeeded} off ${ballsRemaining} bls)`;
         }
         
-        if(inn.total_runs >= target && state.status === 'live') {
-            triggerMatchCompletionPopup();
-        } else if((inn.wickets >= 10 || ballsRemaining <= 0) && state.status === 'live') {
-            triggerMatchCompletionPopup();
-        } else if (state.status === 'completed') {
+        if(inn.total_runs >= target || inn.wickets >= 10 || ballsRemaining <= 0) {
             triggerMatchCompletionPopup();
         }
     } else {
         const totalMaxBalls = state.max_overs * 6;
         const ballsRemaining = totalMaxBalls - inn.total_balls;
-        if((inn.wickets >= 10 || ballsRemaining <= 0) && state.status === 'live') {
+        if(inn.wickets >= 10 || ballsRemaining <= 0 || state.status === "inn1_completed") {
             triggerInningsBreakPopup();
         }
     }
@@ -934,6 +923,9 @@ function commitNewBowler() {
 }
 
 function triggerInningsBreakPopup() {
+    const summaryModal = document.getElementById("inningsSummaryModal");
+    if (!summaryModal) return;
+    
     const inn = liveStateMemory.innings.innings_1;
     document.getElementById('innSumScore').innerText = `${inn.total_runs}/${inn.wickets}`;
     document.getElementById('innSumTopPerformers').innerHTML = `
@@ -953,7 +945,7 @@ function triggerInningsBreakPopup() {
         btn.style.opacity = "0.5";
         btn.onclick = null;
     }
-    document.getElementById('inningsSummaryModal').style.display = 'flex';
+    summaryModal.style.display = 'flex';
 }
 
 function launchSecondInningsCreaseSetup() {
@@ -1002,35 +994,31 @@ function launchSecondInningsCreaseSetup() {
                      bowler_name: bName,
                      wicketkeeper_id: autodetectedKeeperId
                  })
-            }).then(() => location.reload());
+            }).then(() => {
+                // Instantly clear layout loops and refresh paths completely
+                if (synchronizationLoopIntervalTimer) clearInterval(synchronizationLoopIntervalTimer);
+                location.reload();
+            });
         });
     }).catch(() => {});
 }
 
 function triggerMatchCompletionPopup() {
-    if (liveStateMemory && liveStateMemory.status === 'completed') {
-        document.getElementById('innSumScore').innerText = "MATCH COMPLETED";
-        document.getElementById('innSumTopPerformers').innerHTML = `<strong>WINNER: ${liveStateMemory.winner.toUpperCase()}</strong>`;
-        const btn = document.getElementById('innSumActionBtn');
-        btn.innerText = "VIEW DETAILED SCORECARD";
-        btn.disabled = false;
-        btn.style.opacity = "1";
-        btn.onclick = () => { window.location.href = `/detailed-score/${window.matchCode}`; };
-        document.getElementById('inningsSummaryModal').style.display = 'flex';
-        return;
+    const summaryModal = document.getElementById("inningsSummaryModal");
+    if (!summaryModal) return;
+
+    document.getElementById('innSumScore').innerText = "MATCH COMPLETED";
+    document.getElementById('innSumTopPerformers').innerHTML = `<strong>WINNER: ${liveStateMemory.winner.toUpperCase()}</strong>`;
+    const btn = document.getElementById('innSumActionBtn');
+    btn.innerText = "VIEW DETAILED SCORECARD";
+    btn.disabled = false;
+    btn.style.opacity = "1";
+    btn.onclick = () => { window.location.href = `/detailed-score/${window.matchCode}`; };
+    summaryModal.style.display = 'flex';
+
+    if (window.isAdmin && liveStateMemory.status !== 'completed') {
+        secureApiFetch(`/api/match/complete/${window.matchCode}`, { method: 'POST' }).catch(() => {});
     }
-
-    if (!window.isAdmin) return;
-
-    secureApiFetch(`/api/match/complete/${window.matchCode}`, { method: 'POST' })
-    .then(data => {
-        document.getElementById('innSumScore').innerText = "MATCH COMPLETED";
-        document.getElementById('innSumTopPerformers').innerHTML = `<strong>WINNER: ${data.winner.toUpperCase()}</strong>`;
-        const btn = document.getElementById('innSumActionBtn');
-        btn.innerText = "VIEW DETAILED SCORECARD";
-        btn.onclick = () => { window.location.href = `/detailed-score/${window.matchCode}`; };
-        document.getElementById('inningsSummaryModal').style.display = 'flex';
-    }).catch(() => {});
 }
 
 function renderDetailedStatisticsView(matchCode) {
