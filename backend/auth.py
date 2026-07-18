@@ -1,29 +1,14 @@
-from functools import wraps
-from flask import session, jsonify, request, redirect, url_for
+import os
+from dotenv import load_dotenv
 
-# Predefined admin access credentials from configuration specifications
-ADMIN_USERS = {
-    "Admin1": "Delta247",
-    "Admin2": "Gamma247"
-}
+# Load environmental variables from local .env file if present
+load_dotenv()
 
-def verify_admin(username, password):
+class Config:
     """
-    Verifies provided username and password signatures against the fixed credential dictionary.
+    Centralized configuration engine holding database location constants, 
+    cryptographic session salts, and private security credential paths.
     """
-    return ADMIN_USERS.get(username) == password
-
-def login_required(f):
-    """
-    Route decorator ensuring administrative session tracking is verified[cite: 14].
-    Gracefully intercepts raw JSON requests with a clean 401 status while handling
-    standard viewport browser redirects natively[cite: 14].
-    """
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if not session.get('admin_logged_in'):
-            if request.is_json or request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return jsonify({"status": "error", "message": "Unauthorized access"}), 401
-            return redirect(url_for('main.login_page'))
-        return f(*args, **kwargs)
-    return decorated_function
+    SECRET_KEY = os.environ.get('SECRET_KEY', 'bento_box_secret_key_777')
+    FIREBASE_CREDENTIALS_PATH = os.environ.get('FIREBASE_CREDENTIALS_PATH', 'firebase_creds.json')
+    FIREBASE_DATABASE_URL = os.environ.get('FIREBASE_DATABASE_URL', 'https://cricstats-e21f1-default-rtdb.firebaseio.com/')
