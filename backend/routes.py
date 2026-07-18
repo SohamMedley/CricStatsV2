@@ -131,6 +131,20 @@ def api_matches_history():
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@main.route('/api/match/delete/<match_code>', methods=['DELETE'])
+@login_required
+def api_delete_match(match_code):
+    """Safely drops a match configuration completely out of the database mapping."""
+    try:
+        match_id = db_ref.child('match_codes').child(match_code).get()
+        if match_id:
+            db_ref.child('matches').child(match_id).delete()
+            db_ref.child('match_codes').child(match_code).delete()
+            return jsonify({"status": "success", "message": "Match configuration deleted successfully."})
+        return jsonify({"status": "error", "message": "Target match record reference dead."}), 404
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Failed to drop match: {str(e)}"}), 500
+
 @main.route('/api/players', methods=['GET', 'POST'])
 def api_players():
     if request.method == 'POST':
