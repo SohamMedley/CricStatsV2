@@ -5,17 +5,42 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Live Scoring - CricStats</title>
     <link rel="stylesheet" href="/frontend/css/style.css">
+    <style>
+        .icon-copy-btn {
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.1);
+            color: var(--text-pure);
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            vertical-align: middle;
+            margin-left: 6px;
+            transition: all 0.3s ease;
+        }
+        .icon-copy-btn:hover {
+            background: var(--cobalt-core);
+            border-color: var(--cobalt-core);
+            transform: scale(1.05);
+        }
+    </style>
 </head>
 <body>
-    <!-- Live Operational Feedback Notification Bar -->
     <div id="feedbackToast" class="feedback-toast-banner"></div>
 
     <div class="mobile-container">
         <!-- Live Score Match Header Component -->
         <div class="page-header">
             <div>
-                CODE: <strong id="displayCode">{{match_code}}</strong> 
-                <button class="chip-add-btn" onclick="navigator.clipboard.writeText('{{match_code}}')">COPY</button>
+                <!-- Obfuscated Pin Filter Engine Execution -->
+                CODE: <strong id="displayCode" data-raw-code="{{match_code}}">{{match_code[:2]}}*****</strong> 
+                {% if admin_view %}
+                <button class="icon-copy-btn" onclick="navigator.clipboard.writeText('{{match_code}}'); triggerGlobalNotificationBanner('Code Copied Safely', false);">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin='round'><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                </button>
+                {% endif %}
             </div>
             <button class="nav-back-btn" onclick="window.location.href='/detailed-score/{{match_code}}'">DETAILED</button>
         </div>
@@ -27,7 +52,6 @@
             <p>Overs: <span id="liveOversDisplay">0.0</span> / <span id="maxOversDisplay">0</span></p>
         </div>
 
-        <!-- Component Layout Stack for Active Performers -->
         <div class="bento-stack">
             <!-- Batsmen Tracking Card -->
             <div class="bento-card full-width">
@@ -61,7 +85,6 @@
         <!-- Conditional Administration Controls Grid Layer Template Check -->
         {% if admin_view %}
         <div id="adminControlPad">
-            <!-- Core Transaction Execution Matrix -->
             <div class="action-pad-grid">
                 <button class="btn-run" onclick="submitBallRecord('RUN', 1)">1</button>
                 <button class="btn-run" onclick="submitBallRecord('RUN', 2)">2</button>
@@ -78,13 +101,11 @@
                 <button class="btn-wicket" onclick="triggerRunOutModal()">RUN OUT</button>
             </div>
             
-            <!-- Replay Engine Transaction Recovery Lever -->
             <button class="secondary btn-full-width" style="margin-top: 14px;" onclick="submitUndoTransactionRequest()">
                 ↺ UNDO LAST BALL DELIVERY
             </button>
         </div>
         {% else %}
-        <!-- SPECTATOR READ-ONLY VIEW: Displayed when admin_view evaluates to False -->
         <div class="bento-card full-width" style="text-align: center; padding: 24px 0; border-top: 1px solid rgba(0, 194, 255, 0.25); background: rgba(255, 255, 255, 0.01);">
             <span class="captain-badge" style="color: var(--electric-blue); font-size: 0.9rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;">👁️ Spectator Broadcast Active</span>
             <p class="card-sub-label" style="font-size: 0.85rem; margin-top: 6px; color: var(--text-dim);">Live scoreboard stream is operating in secure read-only mode.</p>
@@ -107,7 +128,6 @@
             </div>
         </div>
 
-        <!-- Overhauled Run Out Modal Workspace Mapping Crease Targets -->
         <div id="runOutModal" class="modal-overlay">
             <div class="modal-content">
                 <h3>RUN OUT DISMISSAL ENGINE</h3>
