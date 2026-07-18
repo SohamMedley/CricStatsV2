@@ -6,38 +6,31 @@
     <title>Roster Vault - CricStats</title>
     <link rel="stylesheet" href="/frontend/css/style.css">
     <style>
-        /* Sticky Form Actions Layout Configuration Override */
-        .sticky-action-bar {
-            position: -webkit-sticky;
-            position: sticky;
+        /* Ensures the scroll content does not hide behind the fixed footer */
+        .mobile-container {
+            padding-bottom: 110px !important; 
+        }
+        /* Sticky Static True Anchor Form Actions Layout */
+        .fixed-bottom-bar {
+            position: fixed;
             bottom: 0;
-            background: rgba(0, 0, 0, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: var(--border-hairline);
-            padding: 16px 0;
-            z-index: 100;
-            margin-top: auto;
-        }
-        .scrollable-feed-pane {
-            flex: 1;
-            overflow-y: auto;
-            max-height: calc(100vh - 280px);
-            padding-right: 4px;
-        }
-        .scrollable-feed-pane::-webkit-scrollbar {
-            width: 3px;
-        }
-        .scrollable-feed-pane::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.08);
-            border-radius: var(--radius-pill);
+            left: 0;
+            width: 100%;
+            background: rgba(2, 3, 6, 0.95);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px 24px;
+            z-index: 1000;
+            display: flex;
+            justify-content: center;
         }
     </style>
 </head>
 <body>
     <div id="feedbackToast" class="feedback-toast-banner"></div>
 
-    <div class="mobile-container" style="display: flex; flex-direction: column; height: 100vh; overflow: hidden;">
+    <div class="mobile-container">
         <div class="page-header">
             <h2 class="page-title">Roster Vault</h2>
             <button class="nav-back-btn" onclick="window.location.href='/home'">DASHBOARD</button>
@@ -48,14 +41,14 @@
         </div>
 
         <!-- Scrollable Feed View Layer Area -->
-        <div id="playerListContainer" class="scrollable-feed-pane bento-stack">
+        <div id="playerListContainer" class="squad-list-container">
             <div class="empty-state-text">Loading recorded profiles...</div>
         </div>
+    </div>
 
-        <!-- Sticky Static Create Action Container Box -->
-        <div class="sticky-action-bar" id="actionContainer">
-            <button class="btn-full-width" onclick="togglePlayerModal(true)">+ ADD NEW PROFILE</button>
-        </div>
+    <!-- Pinned Static Bottom Create Action Container Box -->
+    <div class="fixed-bottom-bar" id="actionContainer">
+        <button class="btn-full-width" style="max-width: 440px; margin: 0;" onclick="togglePlayerModal(true)">+ ADD NEW PROFILE</button>
     </div>
 
     <!-- Creation Dialog Modal Workspace Layer -->
