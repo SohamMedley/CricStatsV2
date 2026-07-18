@@ -1,25 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap');
 
 :root {
-    /* Cosmic Black Hole & Electric Hyper Cobalt Palette */
     --bg-dark: #000000;
     --bg-canvas: #020306;
     --card-glass: rgba(255, 255, 255, 0.02);
     --card-glass-hover: rgba(255, 255, 255, 0.06);
     
-    /* Luminescent Typography Scales */
     --text-pure: #FFFFFF;
     --text-silver: #E5E5EA;
     --text-dim: #798094;
     
-    /* Cyber Accent Tones */
     --cobalt-core: #0A54FF;
     --cobalt-glow: rgba(10, 84, 255, 0.45);
     --electric-blue: #00C2FF;
     --system-alert: #FF334B;
     --system-secure: #2CE662;
     
-    /* Layout Mappings */
     --border-hairline: 1px solid rgba(255, 255, 255, 0.06);
     --border-accent-line: 1px solid rgba(10, 84, 255, 0.35);
     --radius-pill: 9999px;
@@ -49,7 +45,6 @@ body {
     perspective: 1200px;
 }
 
-/* Layered Chromatic Background Lighting Filters */
 body::before {
     content: '';
     position: fixed;
@@ -77,20 +72,45 @@ body::after {
     animation: auraPulse 12s ease-in-out infinite alternate-reverse;
 }
 
-/* Base Mobile Frame Layout */
+/* RESPONSIVE FLUID CONTAINER: Replaces rigid mobile frames */
 .mobile-container {
     width: 100%;
-    max-width: 460px;
+    max-width: 480px;
     background-color: var(--bg-dark);
     color: var(--text-pure);
     min-height: 100vh;
-    padding: 44px 32px;
+    padding: 40px 24px;
     position: relative;
     z-index: 10;
     display: flex;
     flex-direction: column;
-    gap: 36px;
+    gap: 32px;
     transform-style: preserve-3d;
+    box-shadow: 0 0 100px rgba(0, 0, 0, 0.8);
+}
+
+@media (min-width: 768px) {
+    .mobile-container {
+        max-width: 720px;
+        min-height: 92vh;
+        margin: 4vh auto;
+        border: var(--border-hairline);
+        border-radius: 16px;
+        padding: 48px 40px;
+    }
+    .bento-grid {
+        grid-template-columns: repeat(3, 1fr) !important;
+    }
+    .action-pad-grid {
+        grid-template-columns: repeat(5, 1fr) !important;
+    }
+}
+
+@media (min-width: 1024px) {
+    .mobile-container {
+        max-width: 960px;
+        padding: 56px 48px;
+    }
 }
 
 .top-nav {
@@ -142,7 +162,6 @@ body::after {
     transform: translateY(-2px);
 }
 
-/* Brand Identity Elements */
 .logo-btn {
     display: flex;
     align-items: center;
@@ -166,14 +185,14 @@ body::after {
 .bento-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 24px;
+    gap: 20px;
     width: 100%;
 }
 
 .bento-stack {
     display: flex;
     flex-direction: column;
-    gap: 28px;
+    gap: 24px;
     width: 100%;
 }
 
@@ -208,6 +227,12 @@ body::after {
     width: 100%;
 }
 
+@media (min-width: 768px) {
+    .bento-card.full-width {
+        grid-column: span 3;
+    }
+}
+
 .card-label {
     display: inline-block;
     font-family: 'Space Grotesk', sans-serif;
@@ -230,15 +255,14 @@ body::after {
     line-height: 1.6;
 }
 
-/* Frameless Inputs Systems */
 input {
     width: 100%;
-    padding: 18px 0;
+    padding: 16px 0;
     border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     background: transparent;
     color: var(--text-pure);
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 500;
     outline: none;
     border-radius: 0;
@@ -256,15 +280,14 @@ input:focus {
     box-shadow: 0 8px 16px rgba(10, 84, 255, 0.05);
 }
 
-/* Premium Precision Select Dropdowns Overhaul */
 select {
     width: 100%;
-    padding: 18px 44px 18px 0;
+    padding: 16px 44px 16px 0;
     border: none;
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
     background: transparent;
     color: var(--text-pure);
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 500;
     outline: none;
     border-radius: 0;
@@ -290,12 +313,11 @@ select option {
     padding: 14px;
 }
 
-/* Pill Core Buttons */
 button {
     background: var(--text-pure);
     color: var(--bg-dark);
     border: none;
-    padding: 18px 32px;
+    padding: 16px 28px;
     font-size: 0.85rem;
     font-weight: 700;
     text-transform: uppercase;
@@ -330,18 +352,17 @@ button.secondary:hover {
     box-shadow: none;
 }
 
-/* Premium Main Covers Panel Configuration */
 .score-header-box {
     border: none;
     background: transparent;
     color: var(--text-pure);
-    padding: 32px 0;
+    padding: 24px 0;
     text-align: left;
 }
 
 .score-header-box h2 {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 1.4rem;
+    font-size: 1.3rem;
     font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.18em;
@@ -350,7 +371,7 @@ button.secondary:hover {
 
 .score-header-box h1 {
     font-family: 'Space Grotesk', sans-serif;
-    font-size: 6.5rem;
+    font-size: 5.5rem;
     font-weight: 800;
     letter-spacing: -0.06em;
     margin: 4px 0;
@@ -359,6 +380,12 @@ button.secondary:hover {
     background: linear-gradient(180deg, #FFFFFF 20%, rgba(255, 255, 255, 0.08) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
+}
+
+@media (min-width: 768px) {
+    .score-header-box h1 {
+        font-size: 7.5rem;
+    }
 }
 
 .score-header-box p {
@@ -370,12 +397,11 @@ button.secondary:hover {
     margin-top: 8px;
 }
 
-/* Action Control Pad Overhaul */
 .action-pad-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
-    gap: 14px;
-    margin-top: 20px;
+    gap: 12px;
+    margin-top: 16px;
 }
 
 .btn-run { 
@@ -430,13 +456,13 @@ button.secondary:hover {
     justify-content: space-between;
     align-items: center;
     background: transparent;
-    padding: 18px 0;
+    padding: 16px 0;
     border: none;
     border-bottom: var(--border-hairline);
     font-size: 1rem;
     user-select: none;
     -webkit-user-select: none;
-    transition: padding var(--speed-fluid) var(--ease-ios);
+    transition: padding var(--speed-fluid) ease-in-out;
 }
 
 .player-row-chip:hover {
@@ -541,7 +567,7 @@ th {
 }
 
 td {
-    padding: 18px 0;
+    padding: 16px 0;
     font-size: 0.95rem;
     border-bottom: var(--border-hairline);
     color: var(--text-silver);
@@ -609,9 +635,6 @@ tr:last-child td {
     display: none;
 }
 
-/* ─────────────────────────────────────────────────────────────────────────────
-   NEW ADDITION: DYNAMIC THEMED TOOLTIP STATS HUD OVERLAYS
-   ───────────────────────────────────────────────────────────────────────────── */
 .stats-popover-hud {
     margin-top: 8px;
     background: rgba(3, 6, 14, 0.95);
